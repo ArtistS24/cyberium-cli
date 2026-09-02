@@ -306,6 +306,116 @@ def cmd_extra(client, cfg):
     print(f"{DIM}To submit extra answer:{RESET} {CYAN}cyberium submit-extra <idx> '<answer>'{RESET}\n")
 
 
+def cmd_stats(client, cfg):
+    """Detailed Cyberium Academy Offensive Dashboard."""
+    from .ui import ASCII_BANNER, calculate_rank
+    print(ASCII_BANNER)
+
+    prof = client.get_profile()
+    ident = prof.get("identity", {}) if "identity" in prof else {}
+    name = f"{ident.get('firstName', '')} {ident.get('lastName', '')}"
+    division = ident.get("divisionName", "")
+    unit = ident.get("unitName", "")
+    points = ident.get("trainingPoints", 0)
+    coins = ident.get("coinBalance", 0)
+    rank_title, rank_color = calculate_rank(points)
+
+    print(f"  {BOLD}OPERATOR:{RESET}  {WHITE}{name}{RESET}  {DIM}│{RESET}  {BOLD}DIVISION:{RESET} {CYAN}{division}{RESET} {DIM}({unit}){RESET}")
+    print(f"  {BOLD}RANK:{RESET}      {rank_color}{BOLD}{rank_title}{RESET}")
+    print(f"  {BOLD}POINTS:{RESET}    {GREEN}{points} pts{RESET}  {DIM}│{RESET}  {BOLD}COINS:{RESET}    {YELLOW}{coins} coins{RESET}\n")
+
+    # Program Breakdown
+    progs = client.get_programs()
+    prog_list = progs if isinstance(progs, list) else progs.get("programs", [])
+    print(header("ENROLLED SPECIALIZATION TRACKS"))
+    for p in prog_list:
+        code = p.get("code", "")
+        pname = p.get("name", "")
+        lvl = p.get("level", 1)
+        tot = p.get("total_modules", "0")
+        comp = p.get("completed_modules", "0")
+        pct = p.get("completion_pct", 0)
+        p_bar = progress_bar(int(comp), int(tot) if int(tot) > 0 else 1, width=14)
+        print(f"  {BOLD}{code:<6}{RESET} {WHITE}{pname:<26}{RESET} {p_bar} {DIM}(Lvl {lvl}) [{comp}/{tot} Mods]{RESET}")
+    print(divider() + "\n")
+
+
+def cmd_exam(client, cfg):
+    """View module lab test / timed exam details."""
+    mod_id = cfg.get("current_module_id", 88)
+    prog_id = cfg.get("current_program_id", 10)
+    data = client.get_modules(prog_id)
+    modules = data.get("modules", [])
+    for m in modules:
+        if m.get("id") == mod_id:
+            name = m.get("name", "")
+            is_unlocked = m.get("lab_test_unlocked", False)
+            is_comp = m.get("lab_test_completed", False)
+            sps = m.get("lab_test_sps")
+            dur = m.get("lab_test_duration_sec", 0)
+
+            print(header("TIMED LAB EXAM / SPS PERFORMANCE", name))
+            status = f"{GREEN}[✓ COMPLETED]{RESET}" if is_comp else (f"{YELLOW}[UNLOCKED]{RESET}" if is_unlocked else f"{RED}[LOCKED]{RESET}")
+            print(f"  {BOLD}Module:{RESET}       {WHITE}{name}{RESET}")
+            print(f"  {BOLD}Exam Status:{RESET}  {status}")
+            if sps is not None:
+                score_col = GREEN if sps >= 80 else (YELLOW if sps >= 60 else RED)
+                print(f"  {BOLD}SPS Score:{RESET}    {score_col}{sps}% SPS Rating{RESET}")
+            if dur:
+                mins = dur // 60
+                secs = dur % 60
+                print(f"  {BOLD}Duration:{RESET}     {CYAN}{mins}m {secs}s{RESET}")
+            print(divider() + "\n")
+            return
+    print(f"{RED}[!] Module #{mod_id} not found.{RESET}\n")
+
+
+def cmd_note(cfg, args):
+    """Add or read personal scratchpad note for a question."""
+    from .config import get_note, save_note
+    mod_id = cfg.get("current_module_id", 88)
+    q_idx = args.index
+    note_text = " ".join(args.text) if args.text else None
+
+    if note_text is not None:
+        save_note(mod_id, q_idx, note_text)
+        print(f"{GREEN}[✓] Note saved for Question #{q_idx}.{RESET}\n")
+    else:
+        existing = get_note(mod_id, q_idx)
+        print(header("STUDENT SCRATCHPAD NOTE", f"Question #{q_idx}"))
+        if existing:
+            print(f"  {CYAN}{BOLD}󰉋 {existing}{RESET}\n")
+        else:
+            print(f"  {DIM}[No note attached to this question yet]{RESET}")
+            print(f"  {DIM}To save note:{RESET} {YELLOW}cyberium note {q_idx} \"your note here\"{RESET}\n")
+
+
+def cmd_search(client, cfg, term):
+    """Search questions in current module by keyword."""
+    mod_id = cfg.get("current_module_id", 88)
+    data = client.get_questions(mod_id)
+    if "error" in data:
+        print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
+        return
+
+    questions = data.get("questions", [])
+    matches = [q for q in questions if term.lower() in q.get("text", "").lower()]
+
+    print(header("SEARCH RESULTS", f"Keyword: '{term}' in {data.get('module_name')}"))
+    if not matches:
+        print(f"  {YELLOW}[!] No questions matched '{term}'.{RESET}\n")
+        return
+
+    for q in matches:
+        idx = q.get("index")
+        text = q.get("text", "").replace("\n", " ")
+        is_ans = q.get("answered", False)
+        badge = f"{GREEN}[{ICON_CHECK}]{RESET}" if is_ans else f"{DIM}[ ]{RESET}"
+        print(f" {badge} {BOLD}#{idx:<2}{RESET} {WHITE}{text}{RESET}")
+
+    print(divider() + f"\n{GREEN}Found {len(matches)} matching question(s).{RESET}\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Cyberium Academy Official Terminal Client & Submission Tool",
@@ -318,6 +428,10 @@ def main():
   cyberium set-module 88        # Switch to Module 88
   cyberium programs             # List enrolled programs
   cyberium set-program 10       # Switch to Program 10 (ZX310)
+  cyberium stats                # Full operator rank, progress & coin stats
+  cyberium exam                 # View timed lab exam / SPS performance
+  cyberium note 14 "memo"       # Save personal note for question #14
+  cyberium search "wget"        # Search questions by keyword
   cyberium book                 # View course PDF book link
   cyberium video                # View HD video lecture link
   cyberium extra                # View bonus / extra challenges
@@ -334,10 +448,20 @@ def main():
     subparsers.add_parser("modules", help="List all modules in current program")
     subparsers.add_parser("programs", help="List all enrolled programs")
     subparsers.add_parser("profile", help="Show student profile & score")
+    subparsers.add_parser("stats", help="Full student operator dashboard & rank")
     subparsers.add_parser("banner", help="Display Cyberium ASCII banner & stats")
     subparsers.add_parser("book", help="Get official course PDF book link")
     subparsers.add_parser("video", help="Get HD video lecture streaming link")
     subparsers.add_parser("extra", help="List bonus/extra challenges")
+    subparsers.add_parser("exam", help="View module timed lab exam & SPS score")
+
+    search_parser = subparsers.add_parser("search", help="Search questions by keyword")
+    search_parser.add_argument("term", help="Search term/keyword")
+
+    note_parser = subparsers.add_parser("note", help="Add or read question notes")
+    note_parser.add_argument("index", type=int, help="Question index")
+    note_parser.add_argument("text", nargs="*", help="Note text to save")
+
     subparsers.add_parser("login", help="Interactive login / cookie setup")
     subparsers.add_parser("tui", help="Launch interactive full-screen TUI dashboard")
 
@@ -382,6 +506,14 @@ def main():
         cmd_set_program(cfg, args.id)
     elif args.command == "profile":
         cmd_profile(client)
+    elif args.command == "stats":
+        cmd_stats(client, cfg)
+    elif args.command == "exam":
+        cmd_exam(client, cfg)
+    elif args.command == "note":
+        cmd_note(cfg, args)
+    elif args.command == "search":
+        cmd_search(client, cfg, args.term)
     elif args.command == "banner":
         cmd_banner(client, cfg)
     elif args.command == "book":
