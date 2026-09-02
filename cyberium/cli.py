@@ -12,6 +12,26 @@ from .ui import (
 )
 
 
+def ensure_client(cfg):
+    """Ensures a valid authenticated CyberiumClient exists, prompting login if needed."""
+    cookies = cfg.get("cookies", {})
+    if not cookies or not cookies.get("connect.sid"):
+        print(f"\n{YELLOW}{BOLD}[!] No Cyberium student session detected.{RESET}")
+        print(f"{WHITE}Each student needs their own session cookies to submit answers.{RESET}\n")
+        choice = input(f"{CYAN}Would you like to log in now? [Y/n]: {RESET}").strip().lower()
+        if choice in ("", "y", "yes"):
+            success = interactive_login(cfg)
+            if not success:
+                sys.exit(1)
+            cfg = load_config()
+        else:
+            print(f"\n{DIM}You can set up your session anytime with:{RESET} {CYAN}cyberium login{RESET}")
+            print(f"{DIM}Or by creating a {BOLD}.env{RESET}{DIM} file (see .env.example).{RESET}\n")
+            sys.exit(0)
+
+    return CyberiumClient(cfg)
+
+
 def cmd_current(client, cfg):
     module_id = cfg.get("current_module_id", 88)
     q_data = client.get_questions(module_id)
@@ -239,7 +259,7 @@ def main():
         interactive_login(cfg)
         return
 
-    client = CyberiumClient(cfg)
+    client = ensure_client(cfg)
 
     if args.command in (None, "status", "current", "show"):
         cmd_current(client, cfg)

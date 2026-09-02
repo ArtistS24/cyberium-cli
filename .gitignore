@@ -1,6 +1,17 @@
+# Secrets and environment files
+.env
+.env.local
+.env.*.local
+*.json
+!package*.json
+!tsconfig*.json
+
+# Python caches and builds
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 *.egg-info/
 build/
 dist/
 .pytest_cache/
+.coverage
