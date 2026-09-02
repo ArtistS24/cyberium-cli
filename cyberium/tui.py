@@ -1,7 +1,7 @@
 """
 Cyberium Academy Interactive Terminal User Interface (TUI)
 Built with Python Standard Library Curses (Zero External Dependencies)
-Optimized for ADHD/Dyslexia readability, mouse navigation, and multi-program switching.
+Smart & Dynamic: Aware of Lecturer Unlocks, Module States, and Multi-Program Tracks.
 """
 
 import sys
@@ -44,6 +44,8 @@ class CyberiumTUI:
         self.program_name = "ZX310 Cyber Warfare"
         self.questions = []
         self.module_name = ""
+        self.module_open = True
+        self.module_completed = False
         self.total = 0
         self.answered = 0
         self.first_unanswered = 0
@@ -84,7 +86,7 @@ class CyberiumTUI:
             curses.init_pair(2, curses.COLOR_CYAN, -1)      # Cyan titles / accents
             curses.init_pair(3, curses.COLOR_GREEN, -1)     # Green / Solved
             curses.init_pair(4, curses.COLOR_YELLOW, -1)    # Yellow / Active Pending
-            curses.init_pair(5, curses.COLOR_RED, -1)       # Red / Error
+            curses.init_pair(5, curses.COLOR_RED, -1)       # Red / Error / Locked
             curses.init_pair(6, curses.COLOR_MAGENTA, -1)   # Magenta badges
             curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_BLACK, -1) # Dim / Borders
 
@@ -110,7 +112,7 @@ class CyberiumTUI:
         if not self.client:
             return
 
-        # Fetch Programs to get current program name
+        # Fetch Programs to resolve active program name
         progs_data = self.client.get_programs()
         progs = progs_data if isinstance(progs_data, list) else progs_data.get("programs", [])
         for p in progs:
@@ -118,11 +120,21 @@ class CyberiumTUI:
                 self.program_name = f"{p.get('code', '')} {p.get('name', '')}".strip()
                 break
 
+        # Check module metadata (is_open, lab_completed)
+        mods_data = self.client.get_modules(self.program_id)
+        mods = mods_data.get("modules", [])
+        for m in mods:
+            if m.get("id") == self.module_id:
+                self.module_open = m.get("is_open", True)
+                self.module_completed = m.get("lab_completed", False)
+                break
+
         # Fetch Questions for Current Module
         data = self.client.get_questions(self.module_id)
         if "error" in data:
             self.status_msg = f"Error: {data['error']}"
             self.status_color = 5
+            self.questions = []
             return
 
         self.module_name = data.get("module_name", f"Module #{self.module_id}")
@@ -156,7 +168,7 @@ class CyberiumTUI:
 
     def draw_header(self, max_y, max_x):
         header_text = f" CYBERIUM │ {self.program_name} › {self.module_name} "
-        pct = int(self.answered / self.total * 100) if self.total > 0 else 0
+        pct = int(self.answered / self.total * 100) if self.total > 0 else (100 if self.module_completed else 0)
         stats_text = f" {self.answered}/{self.total} Solved ({pct}%) │ {self.profile_pts} pts "
 
         safe_addstr(self.stdscr, 0, 1, header_text, curses.color_pair(2) | curses.A_BOLD)
@@ -213,45 +225,50 @@ class CyberiumTUI:
         list_h = max_y - 4
         start_y = 2
 
-        if self.selected_idx < self.list_scroll:
-            self.list_scroll = self.selected_idx
-        elif self.selected_idx >= self.list_scroll + list_h:
-            self.list_scroll = self.selected_idx - list_h + 1
+        if not self.questions:
+            status_text = " [LOCKED BY LECTURER] " if not self.module_open else " [NO LABS IN THIS MODULE] "
+            safe_addstr(self.stdscr, start_y + 2, 2, status_text, curses.color_pair(5) | curses.A_BOLD)
+            safe_addstr(self.stdscr, start_y + 4, 2, " Press [m] to pick an open module", curses.color_pair(7))
+        else:
+            if self.selected_idx < self.list_scroll:
+                self.list_scroll = self.selected_idx
+            elif self.selected_idx >= self.list_scroll + list_h:
+                self.list_scroll = self.selected_idx - list_h + 1
 
-        for row in range(list_h):
-            q_idx = self.list_scroll + row
-            if q_idx >= len(self.questions):
-                break
+            for row in range(list_h):
+                q_idx = self.list_scroll + row
+                if q_idx >= len(self.questions):
+                    break
 
-            q = self.questions[q_idx]
-            is_answered = q.get("answered", False)
-            idx_num = q.get("index", q_idx)
-            text = q.get("text", "").replace("\n", " ")
+                q = self.questions[q_idx]
+                is_answered = q.get("answered", False)
+                idx_num = q.get("index", q_idx)
+                text = q.get("text", "").replace("\n", " ")
 
-            is_selected = (q_idx == self.selected_idx)
-            is_active = (q_idx == self.first_unanswered)
+                is_selected = (q_idx == self.selected_idx)
+                is_active = (q_idx == self.first_unanswered)
 
-            if is_answered:
-                badge = "[✓]"
-                pair = 3
-            elif is_active:
-                badge = "[]"
-                pair = 4
-            else:
-                badge = "[ ]"
-                pair = 7
+                if is_answered:
+                    badge = "[✓]"
+                    pair = 3
+                elif is_active:
+                    badge = "[]"
+                    pair = 4
+                else:
+                    badge = "[ ]"
+                    pair = 7
 
-            max_len = split_x - 3
-            item_text = f" {badge} #{idx_num:<2} {text}"
-            if len(item_text) > max_len:
-                item_text = item_text[:max_len - 1] + "…"
-            else:
-                item_text = item_text.ljust(max_len)
+                max_len = split_x - 3
+                item_text = f" {badge} #{idx_num:<2} {text}"
+                if len(item_text) > max_len:
+                    item_text = item_text[:max_len - 1] + "…"
+                else:
+                    item_text = item_text.ljust(max_len)
 
-            if is_selected:
-                safe_addstr(self.stdscr, start_y + row, 1, item_text, curses.color_pair(2) | curses.A_REVERSE | curses.A_BOLD)
-            else:
-                safe_addstr(self.stdscr, start_y + row, 1, item_text, curses.color_pair(pair))
+                if is_selected:
+                    safe_addstr(self.stdscr, start_y + row, 1, item_text, curses.color_pair(2) | curses.A_REVERSE | curses.A_BOLD)
+                else:
+                    safe_addstr(self.stdscr, start_y + row, 1, item_text, curses.color_pair(pair))
 
         try:
             self.stdscr.attron(curses.color_pair(7))
@@ -261,7 +278,23 @@ class CyberiumTUI:
             pass
 
     def draw_question_detail(self, max_y, max_x, split_x):
-        if not self.questions or self.selected_idx >= len(self.questions):
+        card_x = split_x + 2
+        card_w = max_x - split_x - 4
+
+        if not self.questions:
+            if not self.module_open:
+                safe_addstr(self.stdscr, 3, card_x, "◆ MODULE ACCESS: LOCKED []", curses.color_pair(5) | curses.A_BOLD)
+                safe_addstr(self.stdscr, 5, card_x, "The lecturer has not unlocked this module yet.", curses.color_pair(1))
+                safe_addstr(self.stdscr, 7, card_x, "• Check back after your next class lesson.", curses.color_pair(7))
+                safe_addstr(self.stdscr, 8, card_x, "• Press [m] to select an open module with active labs.", curses.color_pair(4) | curses.A_BOLD)
+                safe_addstr(self.stdscr, 9, card_x, "• Press [P] to switch to another training track.", curses.color_pair(2) | curses.A_BOLD)
+            else:
+                safe_addstr(self.stdscr, 3, card_x, "◆ MODULE STATUS: NO LAB EXERCISES", curses.color_pair(4) | curses.A_BOLD)
+                safe_addstr(self.stdscr, 5, card_x, "This module contains lecture/book material only (0 labs).", curses.color_pair(1))
+                safe_addstr(self.stdscr, 7, card_x, "Press [m] to select a module with hands-on labs.", curses.color_pair(2))
+            return
+
+        if self.selected_idx >= len(self.questions):
             return
 
         q = self.questions[self.selected_idx]
@@ -269,9 +302,6 @@ class CyberiumTUI:
         text = q.get("text", "")
         is_answered = q.get("answered", False)
         is_active = (self.selected_idx == self.first_unanswered)
-
-        card_x = split_x + 2
-        card_w = max_x - split_x - 4
 
         if is_answered:
             status_label = "SOLVED [✓]"
@@ -422,12 +452,20 @@ class CyberiumTUI:
                 self.program_name = f"{target_prog.get('code', '')} {target_prog.get('name', '')}".strip()
                 self.cfg["current_program_id"] = self.program_id
                 
-                # Fetch first module of this new program
+                # Automatically pick first open module of this new program
                 mods_data = self.client.get_modules(self.program_id)
                 mods = mods_data.get("modules", [])
-                if mods:
-                    self.module_id = mods[0].get("id")
-                    self.cfg["current_module_id"] = self.module_id
+                chosen_mod = None
+                for m in mods:
+                    if m.get("is_open") and not m.get("lab_completed"):
+                        chosen_mod = m.get("id")
+                        break
+                if not chosen_mod and mods:
+                    chosen_mod = mods[0].get("id")
+
+                if chosen_mod:
+                    self.module_id = chosen_mod
+                    self.cfg["current_module_id"] = chosen_mod
 
                 save_config(self.cfg)
                 self.fetch_data()
@@ -438,7 +476,7 @@ class CyberiumTUI:
                 break
 
     def show_modules_popup(self, max_y, max_x):
-        """Browse and switch between Modules for current program."""
+        """Browse and switch between Modules for current program with Unlock Awareness."""
         if not self.client:
             return
         data = self.client.get_modules(self.program_id)
@@ -448,7 +486,7 @@ class CyberiumTUI:
             self.status_color = 5
             return
 
-        pw = min(74, max_x - 4)
+        pw = min(76, max_x - 4)
         ph = min(16, max_y - 4)
         px = (max_x - pw) // 2
         py = (max_y - ph) // 2
@@ -478,17 +516,32 @@ class CyberiumTUI:
                 if m_idx >= len(modules):
                     break
                 m = modules[m_idx]
-                name = m.get("name", "")[:32]
+                name = m.get("name", "")[:30]
                 correct = m.get("lab_correct", 0)
                 tot = m.get("lab_total", 0)
                 pct = m.get("lab_correct_pct", 0)
                 order = m.get("sort_order", m_idx + 1)
+                is_open = m.get("is_open", True)
+                is_comp = m.get("lab_completed", False)
 
-                line_str = f" #{order:<2} {name:<32} {correct:>3}/{tot:<3} Labs ({pct:>3}%)"
+                if not is_open:
+                    status_badge = "[LOCKED]"
+                    color_p = 5
+                elif is_comp:
+                    status_badge = "[✓ DONE]"
+                    color_p = 3
+                elif tot > 0:
+                    status_badge = f"{correct:>2}/{tot:<2} ({pct:>2}%)"
+                    color_p = 4
+                else:
+                    status_badge = "[THEORY]"
+                    color_p = 7
+
+                line_str = f" #{order:<2} {name:<30} {status_badge:>14}"
                 if m_idx == sel_m:
                     safe_addstr(popup, 2 + row, 2, line_str[:pw - 4], curses.color_pair(2) | curses.A_REVERSE | curses.A_BOLD)
                 else:
-                    safe_addstr(popup, 2 + row, 2, line_str[:pw - 4], curses.color_pair(1))
+                    safe_addstr(popup, 2 + row, 2, line_str[:pw - 4], curses.color_pair(color_p))
 
             safe_addstr(popup, ph - 2, 2, "[↑/↓/j/k] Select │ [Enter] Open Module │ [P] Change Program │ [Esc] Cancel", curses.color_pair(7))
             popup.refresh()
@@ -499,17 +552,20 @@ class CyberiumTUI:
             elif key in (curses.KEY_DOWN, ord('j')):
                 sel_m = min(len(modules) - 1, sel_m + 1)
             elif key in (10, 13, curses.KEY_ENTER):
-                target_mod = modules[sel_m].get("id")
-                self.module_id = target_mod
-                self.cfg["current_module_id"] = target_mod
+                target_mod = modules[sel_m]
+                self.module_id = target_mod.get("id")
+                self.cfg["current_module_id"] = self.module_id
                 save_config(self.cfg)
                 self.fetch_data()
-                self.status_msg = f"Loaded module: {modules[sel_m].get('name')}"
-                self.status_color = 3
+                if not target_mod.get("is_open", True):
+                    self.status_msg = f"[!] '{target_mod.get('name')}' is currently locked by lecturer."
+                    self.status_color = 5
+                else:
+                    self.status_msg = f"Loaded module: {target_mod.get('name')}"
+                    self.status_color = 3
                 break
-            elif key in (ord('P'), ord('p')):
+            elif key in (ord('P'),):
                 self.show_programs_popup(max_y, max_x)
-                # Reload modules for newly selected program
                 data = self.client.get_modules(self.program_id)
                 modules = data.get("modules", [])
                 sel_m = 0
@@ -578,7 +634,6 @@ class CyberiumTUI:
             if key == curses.KEY_RESIZE:
                 continue
 
-            # Mouse click & scroll support
             if key == curses.KEY_MOUSE:
                 try:
                     _, mx, my, _, bstate = curses.getmouse()
@@ -617,9 +672,9 @@ class CyberiumTUI:
                     self.cursor_pos = max(0, self.cursor_pos - 1)
                 elif key == curses.KEY_RIGHT:
                     self.cursor_pos = min(len(self.input_text), self.cursor_pos + 1)
-                elif key in (curses.KEY_HOME, 1):  # Ctrl+A / Home
+                elif key in (curses.KEY_HOME, 1):
                     self.cursor_pos = 0
-                elif key in (curses.KEY_END, 5):   # Ctrl+E / End
+                elif key in (curses.KEY_END, 5):
                     self.cursor_pos = len(self.input_text)
                 elif key == 21:  # Ctrl+U
                     self.input_text = ""
@@ -631,11 +686,13 @@ class CyberiumTUI:
                 if key in (ord('q'), ord('Q')):
                     break
                 elif key in (curses.KEY_UP, ord('k')):
-                    self.selected_idx = max(0, self.selected_idx - 1)
-                    self.detail_scroll = 0
+                    if self.questions:
+                        self.selected_idx = max(0, self.selected_idx - 1)
+                        self.detail_scroll = 0
                 elif key in (curses.KEY_DOWN, ord('j')):
-                    self.selected_idx = min(len(self.questions) - 1, self.selected_idx + 1)
-                    self.detail_scroll = 0
+                    if self.questions:
+                        self.selected_idx = min(len(self.questions) - 1, self.selected_idx + 1)
+                        self.detail_scroll = 0
                 elif key in (curses.KEY_PPAGE, ord('u')):
                     self.detail_scroll = max(0, self.detail_scroll - 4)
                 elif key in (curses.KEY_NPAGE, ord('d')):
@@ -643,9 +700,10 @@ class CyberiumTUI:
                 elif key == 9:  # Tab
                     self.detail_scroll += 4
                 elif key in (ord('i'), ord('I'), 10, 13, curses.KEY_ENTER):
-                    self.input_mode = True
-                    self.input_text = ""
-                    self.cursor_pos = 0
+                    if self.questions and self.module_open:
+                        self.input_mode = True
+                        self.input_text = ""
+                        self.cursor_pos = 0
                 elif key in (ord('c'), ord('C')):
                     if self.questions and self.selected_idx < len(self.questions):
                         q_text = self.questions[self.selected_idx].get("text", "")
@@ -658,10 +716,10 @@ class CyberiumTUI:
                 elif key in (ord('m'), ord('M')):
                     max_y, max_x = self.stdscr.getmaxyx()
                     self.show_modules_popup(max_y, max_x)
-                elif key in (ord('P'),):  # Shift+P opens Program Switcher
+                elif key in (ord('P'),):
                     max_y, max_x = self.stdscr.getmaxyx()
                     self.show_programs_popup(max_y, max_x)
-                elif key in (ord('p'),):  # 'p' opens Profile
+                elif key in (ord('p'),):
                     max_y, max_x = self.stdscr.getmaxyx()
                     self.show_profile_popup(max_y, max_x)
                 elif key in (ord('r'), ord('R')):
