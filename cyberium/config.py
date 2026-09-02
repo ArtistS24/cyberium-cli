@@ -139,3 +139,38 @@ def interactive_login(cfg=None):
     print(f"\n{GREEN}[✓] Credentials saved securely to {CONFIG_PATH}!{RESET}")
     print(f"{DIM}Your session is independent to your local user account.{RESET}\n")
     return True
+
+
+NOTES_PATH = os.path.join(CONFIG_DIR, "notes.json")
+
+
+def load_notes():
+    """Load user notes dictionary from ~/.config/cyberium/notes.json."""
+    if os.path.exists(NOTES_PATH):
+        try:
+            with open(NOTES_PATH, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def get_note(module_id, question_index):
+    """Retrieve personal note for a specific question."""
+    notes = load_notes()
+    key = f"{module_id}_{question_index}"
+    return notes.get(key, "")
+
+
+def save_note(module_id, question_index, note_text):
+    """Save or update personal note for a specific question."""
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+    notes = load_notes()
+    key = f"{module_id}_{question_index}"
+    if note_text.strip():
+        notes[key] = note_text.strip()
+    elif key in notes:
+        del notes[key]
+    with open(NOTES_PATH, "w") as f:
+        json.dump(notes, f, indent=2)
+
