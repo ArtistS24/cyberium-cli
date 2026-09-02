@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyberium-cli"
+version = "1.0.0"
+description = "Cyberium Academy Official Terminal Client & Live Submission CLI"
+readme = "README.md"
+authors = [
+    { name = "Denis Albin", email = "albindeniswork@gmail.com" }
+]
+requires-python = ">=3.8"
+dependencies = []
+
+[project.scripts]
+cyberium = "cyberium.cli:main"
