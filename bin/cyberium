@@ -2,11 +2,12 @@
 import sys
 import os
 
-# Add parent directory to sys.path so package imports work directly
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Resolve symlinks to find the true project directory
+script_path = os.path.realpath(__file__)
+project_root = os.path.abspath(os.path.join(os.path.dirname(script_path), ".."))
+sys.path.insert(0, project_root)
 
 from cyberium.cli import main
 
 if __name__ == "__main__":
     main()
-EOF && chmod +x /home/artist/Projects/cyberium-cli/bin/cyberium

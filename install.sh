@@ -13,7 +13,6 @@ mkdir -p "$TARGET_DIR"
 
 echo "[*] Installing cyberium CLI..."
 
-# If running as root or with sudo access, offer /usr/local/bin
 if [ "$EUID" -eq 0 ]; then
     TARGET_DIR="/usr/local/bin"
 fi
@@ -24,4 +23,3 @@ chmod +x "${DIR}/bin/cyberium"
 echo "[✓] Successfully installed to ${TARGET_DIR}/cyberium"
 echo ""
 echo "Try running: cyberium"
-EOF && chmod +x /home/artist/Projects/cyberium-cli/install.sh
