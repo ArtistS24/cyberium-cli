@@ -77,3 +77,20 @@ def progress_bar(current, total, width=20):
     filled = int(round(width * pct))
     bar = "=" * filled + "-" * (width - filled)
     return f"{CYAN}[{bar}]{RESET} {WHITE}{int(pct * 100)}%{RESET}"
+
+
+def calculate_rank(points):
+    """Calculates student offensive title based on training points."""
+    if points >= 500:
+        return "LVL 6 ◆ CYBER WARFARE OPERATOR", MAGENTA
+    elif points >= 300:
+        return "LVL 5 ◆ SENIOR THREAT SPECIALIST", CYAN
+    elif points >= 150:
+        return "LVL 4 ◆ EXPLOITATION PRACTITIONER", GREEN
+    elif points >= 50:
+        return "LVL 3 ◆ OFFENSIVE APPRENTICE", YELLOW
+    elif points >= 10:
+        return "LVL 2 ◆ SECURITY ANALYST", BLUE
+    else:
+        return "LVL 1 ◆ CYBER RECRUIT", WHITE
+

@@ -1,7 +1,14 @@
 """
 Cyberium Academy Interactive Terminal User Interface (TUI)
 Built with Python Standard Library Curses (Zero External Dependencies)
-Smart & Dynamic: Aware of Lecturer Unlocks, Module States, and Multi-Program Tracks.
+Features:
+- Real-time Live Search & Filter (/)
+- Personal Question Scratchpad Notes ([n])
+- Timed Lab Exam & SPS Performance HUD ([e])
+- Official Course Book PDF links ([b])
+- HD Video Lecture Streaming ([v])
+- Core Labs & Bonus Challenges Toggle ([x])
+- Multi-Program Track Switcher ([P]) & Module Picker ([m])
 """
 
 import sys
@@ -13,8 +20,9 @@ import subprocess
 # Eliminate ESC key lag in ncurses
 os.environ.setdefault("ESCDELAY", "25")
 
-from .config import load_config, save_config
+from .config import load_config, save_config, get_note, save_note
 from .api import CyberiumClient
+from .ui import calculate_rank
 
 
 def safe_addstr(win, y, x, text, attr=0):
@@ -43,6 +51,7 @@ class CyberiumTUI:
         self.program_id = self.cfg.get("current_program_id", 10)
         self.program_name = "ZX310 Cyber Warfare"
         self.questions = []
+        self.filtered_questions = []
         self.module_name = ""
         self.module_open = True
         self.module_completed = False
@@ -54,10 +63,12 @@ class CyberiumTUI:
         self.detail_scroll = 0
         self.status_msg = ""
         self.status_color = 1
-        self.input_mode = False
+        self.input_mode = False       # True when answering question
+        self.search_mode = False      # True when filtering questions
         self.input_text = ""
-        self.q_type = "lab"  # "lab" or "extra"
+        self.search_text = ""
         self.cursor_pos = 0
+        self.q_type = "lab"           # "lab" or "extra"
         self.profile_pts = 0
         self.profile_coins = 0
 
@@ -136,20 +147,30 @@ class CyberiumTUI:
             self.status_msg = f"Error: {data['error']}"
             self.status_color = 5
             self.questions = []
+            self.filtered_questions = []
             return
 
-        type_label = "EXTRA CHALLENGES" if self.q_type == "extra" else "LABS"
         self.module_name = data.get("module_name", f"Module #{self.module_id}")
         self.total = data.get("total", 0)
         self.answered = data.get("answered_count", 0)
         self.first_unanswered = data.get("first_unanswered", 0)
         self.questions = data.get("questions", [])
 
-        if self.first_unanswered is not None and self.first_unanswered < len(self.questions):
+        self.apply_filter()
+
+        if self.first_unanswered is not None and self.first_unanswered < len(self.filtered_questions):
             self.selected_idx = self.first_unanswered
         else:
             self.selected_idx = 0
         self.detail_scroll = 0
+
+    def apply_filter(self):
+        if not self.search_text.strip():
+            self.filtered_questions = self.questions
+        else:
+            term = self.search_text.lower().strip()
+            self.filtered_questions = [q for q in self.questions if term in q.get("text", "").lower()]
+        self.selected_idx = min(self.selected_idx, max(0, len(self.filtered_questions) - 1))
 
     def copy_to_clipboard(self, text):
         try:
@@ -169,9 +190,10 @@ class CyberiumTUI:
         return False
 
     def draw_header(self, max_y, max_x):
+        rank_title, _ = calculate_rank(self.profile_pts)
         header_text = f" CYBERIUM │ {self.program_name} › {self.module_name} "
         pct = int(self.answered / self.total * 100) if self.total > 0 else (100 if self.module_completed else 0)
-        stats_text = f" {self.answered}/{self.total} Solved ({pct}%) │ {self.profile_pts} pts "
+        stats_text = f" {self.answered}/{self.total} Solved ({pct}%) │ {self.profile_pts} pts ({rank_title.split('◆')[0].strip()}) "
 
         safe_addstr(self.stdscr, 0, 1, header_text, curses.color_pair(2) | curses.A_BOLD)
         safe_addstr(self.stdscr, 0, max_x - len(stats_text) - 1, stats_text, curses.color_pair(3) | curses.A_BOLD)
@@ -201,17 +223,29 @@ class CyberiumTUI:
                 self.stdscr.move(max_y - 1, ans_x + self.cursor_pos)
             except Exception:
                 pass
+        elif self.search_mode:
+            prompt = "  Search Questions: "
+            safe_addstr(self.stdscr, max_y - 1, 1, prompt, curses.color_pair(2) | curses.A_BOLD)
+            ans_x = len(prompt) + 1
+            safe_addstr(self.stdscr, max_y - 1, ans_x, self.search_text, curses.color_pair(1) | curses.A_BOLD)
+            curses.curs_set(1)
+            try:
+                self.stdscr.move(max_y - 1, ans_x + self.cursor_pos)
+            except Exception:
+                pass
         else:
             curses.curs_set(0)
             help_items = [
-                ("[↑/↓/j/k]", "Nav"),
-                ("[Enter/i]", "Answer"),
+                ("[↑/↓]", "Nav"),
+                ("[Enter]", "Answer"),
+                ("[/]", "Search"),
+                ("[n]", "Note"),
                 ("[m]", "Modules"),
-                ("[P]", "Programs"),
+                ("[P]", "Tracks"),
                 ("[x]", "Extra" if self.q_type == "lab" else "Labs"),
                 ("[b]", "Book"),
                 ("[v]", "Video"),
-                ("[c]", "Copy"),
+                ("[e]", "Exam"),
                 ("[p]", "Profile"),
                 ("[q]", "Quit"),
             ]
@@ -228,10 +262,19 @@ class CyberiumTUI:
         list_h = max_y - 4
         start_y = 2
 
-        if not self.questions:
-            status_text = " [LOCKED BY LECTURER] " if not self.module_open else " [NO LABS IN THIS MODULE] "
-            safe_addstr(self.stdscr, start_y + 2, 2, status_text, curses.color_pair(5) | curses.A_BOLD)
-            safe_addstr(self.stdscr, start_y + 4, 2, " Press [m] to pick an open module", curses.color_pair(7))
+        if not self.filtered_questions:
+            if self.search_text:
+                status_text = f" [NO MATCHES FOR '{self.search_text[:14]}'] "
+                safe_addstr(self.stdscr, start_y + 2, 2, status_text, curses.color_pair(5) | curses.A_BOLD)
+                safe_addstr(self.stdscr, start_y + 4, 2, " Press [Esc] to clear search filter", curses.color_pair(7))
+            elif not self.module_open:
+                status_text = " [LOCKED BY LECTURER] "
+                safe_addstr(self.stdscr, start_y + 2, 2, status_text, curses.color_pair(5) | curses.A_BOLD)
+                safe_addstr(self.stdscr, start_y + 4, 2, " Press [m] to pick an open module", curses.color_pair(7))
+            else:
+                status_text = " [NO LABS IN THIS MODULE] "
+                safe_addstr(self.stdscr, start_y + 2, 2, status_text, curses.color_pair(5) | curses.A_BOLD)
+                safe_addstr(self.stdscr, start_y + 4, 2, " Press [m] to pick an active module", curses.color_pair(7))
         else:
             if self.selected_idx < self.list_scroll:
                 self.list_scroll = self.selected_idx
@@ -240,16 +283,20 @@ class CyberiumTUI:
 
             for row in range(list_h):
                 q_idx = self.list_scroll + row
-                if q_idx >= len(self.questions):
+                if q_idx >= len(self.filtered_questions):
                     break
 
-                q = self.questions[q_idx]
+                q = self.filtered_questions[q_idx]
                 is_answered = q.get("answered", False)
                 idx_num = q.get("index", q_idx)
                 text = q.get("text", "").replace("\n", " ")
 
                 is_selected = (q_idx == self.selected_idx)
                 is_active = (q_idx == self.first_unanswered)
+
+                # Check if question has a student note attached
+                has_note = bool(get_note(self.module_id, idx_num))
+                note_glyph = " 󰉋" if has_note else ""
 
                 if is_answered:
                     badge = "[✓]"
@@ -262,7 +309,7 @@ class CyberiumTUI:
                     pair = 7
 
                 max_len = split_x - 3
-                item_text = f" {badge} #{idx_num:<2} {text}"
+                item_text = f" {badge} #{idx_num:<2}{note_glyph} {text}"
                 if len(item_text) > max_len:
                     item_text = item_text[:max_len - 1] + "…"
                 else:
@@ -284,7 +331,7 @@ class CyberiumTUI:
         card_x = split_x + 2
         card_w = max_x - split_x - 4
 
-        if not self.questions:
+        if not self.filtered_questions:
             if not self.module_open:
                 safe_addstr(self.stdscr, 3, card_x, "◆ MODULE ACCESS: LOCKED []", curses.color_pair(5) | curses.A_BOLD)
                 safe_addstr(self.stdscr, 5, card_x, "The lecturer has not unlocked this module yet.", curses.color_pair(1))
@@ -297,10 +344,10 @@ class CyberiumTUI:
                 safe_addstr(self.stdscr, 7, card_x, "Press [m] to select a module with hands-on labs.", curses.color_pair(2))
             return
 
-        if self.selected_idx >= len(self.questions):
+        if self.selected_idx >= len(self.filtered_questions):
             return
 
-        q = self.questions[self.selected_idx]
+        q = self.filtered_questions[self.selected_idx]
         idx_num = q.get("index", self.selected_idx)
         text = q.get("text", "")
         is_answered = q.get("answered", False)
@@ -326,12 +373,19 @@ class CyberiumTUI:
         except Exception:
             pass
 
+        # Check for personal student note
+        note_text = get_note(self.module_id, idx_num)
+
         wrapped_lines = []
         for paragraph in text.split("\n"):
             if not paragraph.strip():
                 wrapped_lines.append("")
             else:
                 wrapped_lines.extend(textwrap.wrap(paragraph, width=card_w))
+
+        if note_text:
+            wrapped_lines.append("")
+            wrapped_lines.append(f"󰉋 PERSONAL NOTE: {note_text}")
 
         visible_h = max_y - 10
         total_lines = len(wrapped_lines)
@@ -343,7 +397,11 @@ class CyberiumTUI:
             line_idx = self.detail_scroll + i
             if line_idx >= total_lines:
                 break
-            safe_addstr(self.stdscr, 5 + i, card_x, wrapped_lines[line_idx], curses.color_pair(1))
+            line_content = wrapped_lines[line_idx]
+            if "󰉋 PERSONAL NOTE:" in line_content:
+                safe_addstr(self.stdscr, 5 + i, card_x, line_content, curses.color_pair(2) | curses.A_BOLD)
+            else:
+                safe_addstr(self.stdscr, 5 + i, card_x, line_content, curses.color_pair(1))
 
         if total_lines > visible_h:
             pct_down = int((self.detail_scroll / max_scroll) * 100) if max_scroll > 0 else 100
@@ -353,6 +411,117 @@ class CyberiumTUI:
         if self.status_msg:
             status_y = max_y - 4
             safe_addstr(self.stdscr, status_y, card_x, f" 󰉋 {self.status_msg}", curses.color_pair(self.status_color) | curses.A_BOLD)
+
+    def show_note_popup(self, max_y, max_x):
+        """Add or edit personal scratchpad note for current question."""
+        if not self.filtered_questions or self.selected_idx >= len(self.filtered_questions):
+            return
+        q = self.filtered_questions[self.selected_idx]
+        q_idx = q.get("index", self.selected_idx)
+        current_note = get_note(self.module_id, q_idx)
+
+        pw = min(70, max_x - 4)
+        ph = 8
+        px = (max_x - pw) // 2
+        py = (max_y - ph) // 2
+
+        popup = curses.newwin(ph, pw, py, px)
+        popup.keypad(True)
+        popup.box()
+
+        note_buffer = current_note
+        cursor_pos = len(note_buffer)
+
+        while True:
+            popup.erase()
+            popup.box()
+            safe_addstr(popup, 0, 2, f" SCRATCHPAD NOTE: QUESTION #{q_idx} ", curses.color_pair(2) | curses.A_BOLD)
+            safe_addstr(popup, 2, 2, "Note: ", curses.color_pair(4) | curses.A_BOLD)
+            safe_addstr(popup, 2, 8, note_buffer[:pw - 12], curses.color_pair(1))
+            safe_addstr(popup, ph - 2, 2, "[Enter] Save Note │ [Ctrl+U] Clear │ [Esc] Cancel", curses.color_pair(7))
+
+            curses.curs_set(1)
+            try:
+                popup.move(2, 8 + cursor_pos)
+            except Exception:
+                pass
+            popup.refresh()
+
+            k = popup.getch()
+            if k in (10, 13, curses.KEY_ENTER):
+                save_note(self.module_id, q_idx, note_buffer)
+                self.status_msg = f"Saved note for Question #{q_idx}."
+                self.status_color = 3
+                curses.curs_set(0)
+                break
+            elif k == 27:  # ESC
+                curses.curs_set(0)
+                break
+            elif k in (curses.KEY_BACKSPACE, 127, 8):
+                if cursor_pos > 0:
+                    note_buffer = note_buffer[:cursor_pos - 1] + note_buffer[cursor_pos:]
+                    cursor_pos -= 1
+            elif k == 21:  # Ctrl+U
+                note_buffer = ""
+                cursor_pos = 0
+            elif k == curses.KEY_LEFT:
+                cursor_pos = max(0, cursor_pos - 1)
+            elif k == curses.KEY_RIGHT:
+                cursor_pos = min(len(note_buffer), cursor_pos + 1)
+            elif 32 <= k <= 126 and len(note_buffer) < pw - 14:
+                note_buffer = note_buffer[:cursor_pos] + chr(k) + note_buffer[cursor_pos:]
+                cursor_pos += 1
+
+    def show_exam_popup(self, max_y, max_x):
+        """View Timed Lab Exam & SPS Performance metrics."""
+        if not self.client:
+            return
+        mods_data = self.client.get_modules(self.program_id)
+        modules = mods_data.get("modules", [])
+        curr_m = None
+        for m in modules:
+            if m.get("id") == self.module_id:
+                curr_m = m
+                break
+        if not curr_m:
+            return
+
+        name = curr_m.get("name", "")
+        is_unlocked = curr_m.get("lab_test_unlocked", False)
+        is_comp = curr_m.get("lab_test_completed", False)
+        sps = curr_m.get("lab_test_sps")
+        dur = curr_m.get("lab_test_duration_sec", 0)
+
+        pw = min(64, max_x - 4)
+        ph = 11
+        px = (max_x - pw) // 2
+        py = (max_y - ph) // 2
+
+        popup = curses.newwin(ph, pw, py, px)
+        popup.keypad(True)
+        popup.box()
+
+        status = "COMPLETED [✓]" if is_comp else ("UNLOCKED []" if is_unlocked else "LOCKED []")
+        status_col = 3 if is_comp else (4 if is_unlocked else 5)
+
+        safe_addstr(popup, 0, 2, " TIMED LAB EXAM / SPS PERFORMANCE ", curses.color_pair(2) | curses.A_BOLD)
+        safe_addstr(popup, 2, 3, f"Module:      {name}", curses.color_pair(1) | curses.A_BOLD)
+        safe_addstr(popup, 3, 3, f"Exam Status: {status}", curses.color_pair(status_col) | curses.A_BOLD)
+
+        if sps is not None:
+            sps_col = 3 if sps >= 80 else (4 if sps >= 60 else 5)
+            safe_addstr(popup, 5, 3, f"SPS Rating:  {sps}% Skills Performance Score", curses.color_pair(sps_col) | curses.A_BOLD)
+        if dur:
+            mins = dur // 60
+            secs = dur % 60
+            safe_addstr(popup, 6, 3, f"Duration:    {mins} minutes, {secs} seconds", curses.color_pair(1))
+
+        safe_addstr(popup, 9, 3, "Press [Esc] or [Enter] to close", curses.color_pair(7))
+        popup.refresh()
+        while True:
+            k = popup.getch()
+            if k in (27, 10, 13, ord('q'), ord('Q'), curses.KEY_ENTER):
+                break
 
     def show_profile_popup(self, max_y, max_x):
         if not self.client:
@@ -365,22 +534,24 @@ class CyberiumTUI:
         unit = ident.get("unitName", "")
         points = ident.get("trainingPoints", 0)
         coins = ident.get("coinBalance", 0)
+        rank_title, _ = calculate_rank(points)
 
-        pw = min(54, max_x - 4)
-        ph = 11
+        pw = min(58, max_x - 4)
+        ph = 12
         px = (max_x - pw) // 2
         py = (max_y - ph) // 2
 
         popup = curses.newwin(ph, pw, py, px)
         popup.keypad(True)
         popup.box()
-        safe_addstr(popup, 0, 2, " STUDENT PROFILE ", curses.color_pair(2) | curses.A_BOLD)
-        safe_addstr(popup, 2, 3, f"Name:     {name}", curses.color_pair(1) | curses.A_BOLD)
-        safe_addstr(popup, 3, 3, f"Email:    {email}", curses.color_pair(7))
-        safe_addstr(popup, 4, 3, f"Division: {division} ({unit})", curses.color_pair(1))
+        safe_addstr(popup, 0, 2, " STUDENT OPERATOR PROFILE ", curses.color_pair(2) | curses.A_BOLD)
+        safe_addstr(popup, 2, 3, f"Operator: {name}", curses.color_pair(1) | curses.A_BOLD)
+        safe_addstr(popup, 3, 3, f"Division: {division} ({unit})", curses.color_pair(1))
+        safe_addstr(popup, 4, 3, f"Rank:     {rank_title}", curses.color_pair(6) | curses.A_BOLD)
         safe_addstr(popup, 6, 3, f"Points:   {points} pts", curses.color_pair(3) | curses.A_BOLD)
         safe_addstr(popup, 7, 3, f"Coins:    {coins} coins", curses.color_pair(4) | curses.A_BOLD)
-        safe_addstr(popup, 9, 3, "Press [Esc] or [Enter] to close", curses.color_pair(7))
+        safe_addstr(popup, 8, 3, f"Email:    {email}", curses.color_pair(7))
+        safe_addstr(popup, 10, 3, "Press [Esc] or [Enter] to close", curses.color_pair(7))
 
         popup.refresh()
         while True:
@@ -441,7 +612,7 @@ class CyberiumTUI:
                 else:
                     safe_addstr(popup, 2 + row, 2, line_str[:pw - 4], curses.color_pair(1))
 
-            safe_addstr(popup, ph - 2, 2, "[↑/↓/j/k] Select │ [Enter] Open Program │ [Esc] Cancel", curses.color_pair(7))
+            safe_addstr(popup, ph - 2, 2, "[↑/↓/j/k] Select │ [Enter] Open Track │ [Esc] Cancel", curses.color_pair(7))
             popup.refresh()
 
             key = popup.getch()
@@ -546,7 +717,7 @@ class CyberiumTUI:
                 else:
                     safe_addstr(popup, 2 + row, 2, line_str[:pw - 4], curses.color_pair(color_p))
 
-            safe_addstr(popup, ph - 2, 2, "[↑/↓/j/k] Select │ [Enter] Open Module │ [P] Change Program │ [Esc] Cancel", curses.color_pair(7))
+            safe_addstr(popup, ph - 2, 2, "[↑/↓/j/k] Select │ [Enter] Open Module │ [P] Change Track │ [Esc] Cancel", curses.color_pair(7))
             popup.refresh()
 
             key = popup.getch()
@@ -647,10 +818,10 @@ class CyberiumTUI:
             self.input_mode = False
             return
 
-        if not self.questions or self.selected_idx >= len(self.questions):
+        if not self.filtered_questions or self.selected_idx >= len(self.filtered_questions):
             return
 
-        q = self.questions[self.selected_idx]
+        q = self.filtered_questions[self.selected_idx]
         q_idx = q.get("index", self.selected_idx)
 
         self.status_msg = f"Submitting answer to #{q_idx}..."
@@ -660,7 +831,7 @@ class CyberiumTUI:
         resp = self.client.submit_answer(self.module_id, q_idx, answer, q_type=self.q_type)
 
         if resp.get("correct"):
-            self.status_msg = f"[✓] CORRECT! Points awarded for question #{q_idx}."
+            self.status_msg = f"[✓] CORRECT! +Points awarded for #{q_idx}."
             self.status_color = 3
             self.fetch_profile_stats()
             self.fetch_data()
@@ -711,13 +882,13 @@ class CyberiumTUI:
                     if bstate & (curses.BUTTON1_CLICKED | curses.BUTTON1_PRESSED):
                         if 2 <= my < max_y - 2 and mx < split_x:
                             clicked_idx = self.list_scroll + (my - 2)
-                            if clicked_idx < len(self.questions):
+                            if clicked_idx < len(self.filtered_questions):
                                 self.selected_idx = clicked_idx
                                 self.detail_scroll = 0
                     elif bstate & curses.BUTTON4_PRESSED or key == 65536:
                         self.selected_idx = max(0, self.selected_idx - 1)
                     elif bstate & curses.BUTTON5_PRESSED or key == 65537:
-                        self.selected_idx = min(len(self.questions) - 1, self.selected_idx + 1)
+                        self.selected_idx = min(len(self.filtered_questions) - 1, self.selected_idx + 1)
                 except Exception:
                     pass
                 continue
@@ -750,16 +921,33 @@ class CyberiumTUI:
                 elif 32 <= key <= 126:
                     self.input_text = self.input_text[:self.cursor_pos] + chr(key) + self.input_text[self.cursor_pos:]
                     self.cursor_pos += 1
+            elif self.search_mode:
+                if key in (10, 13, curses.KEY_ENTER, 27):  # Enter or ESC completes search
+                    self.search_mode = False
+                    self.cursor_pos = 0
+                elif key in (curses.KEY_BACKSPACE, 127, 8):
+                    if self.cursor_pos > 0:
+                        self.search_text = self.search_text[:self.cursor_pos - 1] + self.search_text[self.cursor_pos:]
+                        self.cursor_pos -= 1
+                        self.apply_filter()
+                elif key == 21:  # Ctrl+U
+                    self.search_text = ""
+                    self.cursor_pos = 0
+                    self.apply_filter()
+                elif 32 <= key <= 126:
+                    self.search_text = self.search_text[:self.cursor_pos] + chr(key) + self.search_text[self.cursor_pos:]
+                    self.cursor_pos += 1
+                    self.apply_filter()
             else:
                 if key in (ord('q'), ord('Q')):
                     break
                 elif key in (curses.KEY_UP, ord('k')):
-                    if self.questions:
+                    if self.filtered_questions:
                         self.selected_idx = max(0, self.selected_idx - 1)
                         self.detail_scroll = 0
                 elif key in (curses.KEY_DOWN, ord('j')):
-                    if self.questions:
-                        self.selected_idx = min(len(self.questions) - 1, self.selected_idx + 1)
+                    if self.filtered_questions:
+                        self.selected_idx = min(len(self.filtered_questions) - 1, self.selected_idx + 1)
                         self.detail_scroll = 0
                 elif key in (curses.KEY_PPAGE, ord('u')):
                     self.detail_scroll = max(0, self.detail_scroll - 4)
@@ -767,14 +955,24 @@ class CyberiumTUI:
                     self.detail_scroll += 4
                 elif key == 9:  # Tab
                     self.detail_scroll += 4
+                elif key in (ord('/'), ord('s')):
+                    self.search_mode = True
+                    self.search_text = ""
+                    self.cursor_pos = 0
                 elif key in (ord('i'), ord('I'), 10, 13, curses.KEY_ENTER):
-                    if self.questions and self.module_open:
+                    if self.filtered_questions and self.module_open:
                         self.input_mode = True
                         self.input_text = ""
                         self.cursor_pos = 0
+                elif key in (ord('n'), ord('N')):
+                    max_y, max_x = self.stdscr.getmaxyx()
+                    self.show_note_popup(max_y, max_x)
+                elif key in (ord('e'), ord('E')):
+                    max_y, max_x = self.stdscr.getmaxyx()
+                    self.show_exam_popup(max_y, max_x)
                 elif key in (ord('c'), ord('C')):
-                    if self.questions and self.selected_idx < len(self.questions):
-                        q_text = self.questions[self.selected_idx].get("text", "")
+                    if self.filtered_questions and self.selected_idx < len(self.filtered_questions):
+                        q_text = self.filtered_questions[self.selected_idx].get("text", "")
                         if self.copy_to_clipboard(q_text):
                             self.status_msg = "Copied question text to clipboard."
                             self.status_color = 3
