@@ -230,6 +230,82 @@ def cmd_profile(client):
     print(f"{divider()}\n")
 
 
+def cmd_banner(client, cfg):
+    from .ui import ASCII_BANNER
+    print(ASCII_BANNER)
+    cmd_profile(client)
+
+
+def cmd_book(client, cfg):
+    mod_id = cfg.get("current_module_id", 88)
+    prog_id = cfg.get("current_program_id", 10)
+    data = client.get_modules(prog_id)
+    modules = data.get("modules", [])
+    for m in modules:
+        if m.get("id") == mod_id:
+            name = m.get("name", "")
+            book_url = m.get("book_url")
+            print(header("COURSE BOOK", name))
+            if book_url:
+                full_url = f"https://cyberium.academy/{book_url}"
+                print(f"  {BOLD}Module:{RESET}     {WHITE}{name}{RESET}")
+                print(f"  {BOLD}PDF Path:{RESET}   {CYAN}{book_url}{RESET}")
+                print(f"  {BOLD}Direct URL:{RESET} {YELLOW}{full_url}{RESET}")
+                print(f"\n{DIM}To open in browser/reader:{RESET} {CYAN}xdg-open '{full_url}'{RESET}\n")
+            else:
+                print(f"  {YELLOW}[!] No PDF book available for this module.{RESET}\n")
+            return
+    print(f"{RED}[!] Module #{mod_id} not found.{RESET}\n")
+
+
+def cmd_video(client, cfg):
+    mod_id = cfg.get("current_module_id", 88)
+    prog_id = cfg.get("current_program_id", 10)
+    data = client.get_modules(prog_id)
+    modules = data.get("modules", [])
+    for m in modules:
+        if m.get("id") == mod_id:
+            name = m.get("name", "")
+            video_url = m.get("video_url")
+            print(header("VIDEO LECTURE", name))
+            if video_url:
+                print(f"  {BOLD}Module:{RESET}    {WHITE}{name}{RESET}")
+                print(f"  {BOLD}Watch URL:{RESET} {CYAN}{video_url}{RESET}")
+                print(f"\n{DIM}To watch video lecture:{RESET} {CYAN}xdg-open '{video_url}'{RESET}\n")
+            else:
+                print(f"  {YELLOW}[!] No video lecture available for this module.{RESET}\n")
+            return
+    print(f"{RED}[!] Module #{mod_id} not found.{RESET}\n")
+
+
+def cmd_extra(client, cfg):
+    mod_id = cfg.get("current_module_id", 88)
+    data = client.get_questions(mod_id, q_type="extra")
+    if "error" in data:
+        print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
+        return
+
+    mod_name = data.get("module_name", f"Module #{mod_id}")
+    questions = data.get("questions", [])
+    answered = data.get("answered_count", 0)
+    total = data.get("total", 0)
+
+    print(header("BONUS / EXTRA CHALLENGES", f"{mod_name} │ Extra: {answered}/{total}"))
+    if not questions:
+        print(f"  {DIM}[!] No extra challenges for this module yet.{RESET}\n")
+        return
+
+    for q in questions:
+        idx = q.get("index")
+        text = q.get("text", "").replace("\n", " ")
+        is_ans = q.get("answered", False)
+        badge = f"{GREEN}[{ICON_CHECK}]{RESET}" if is_ans else f"{DIM}[ ]{RESET}"
+        print(f" {badge} {BOLD}#{idx:<2}{RESET} {WHITE}{text}{RESET}")
+
+    print(divider())
+    print(f"{DIM}To submit extra answer:{RESET} {CYAN}cyberium submit-extra <idx> '<answer>'{RESET}\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Cyberium Academy Official Terminal Client & Submission Tool",
@@ -242,7 +318,12 @@ def main():
   cyberium set-module 88        # Switch to Module 88
   cyberium programs             # List enrolled programs
   cyberium set-program 10       # Switch to Program 10 (ZX310)
+  cyberium book                 # View course PDF book link
+  cyberium video                # View HD video lecture link
+  cyberium extra                # View bonus / extra challenges
+  cyberium banner               # View stylized ASCII banner & stats
   cyberium profile              # View student stats & points
+  cyberium tui                  # Launch full-screen interactive TUI
   cyberium login                # Update session cookies
 """
     )
@@ -253,6 +334,10 @@ def main():
     subparsers.add_parser("modules", help="List all modules in current program")
     subparsers.add_parser("programs", help="List all enrolled programs")
     subparsers.add_parser("profile", help="Show student profile & score")
+    subparsers.add_parser("banner", help="Display Cyberium ASCII banner & stats")
+    subparsers.add_parser("book", help="Get official course PDF book link")
+    subparsers.add_parser("video", help="Get HD video lecture streaming link")
+    subparsers.add_parser("extra", help="List bonus/extra challenges")
     subparsers.add_parser("login", help="Interactive login / cookie setup")
     subparsers.add_parser("tui", help="Launch interactive full-screen TUI dashboard")
 
@@ -297,6 +382,14 @@ def main():
         cmd_set_program(cfg, args.id)
     elif args.command == "profile":
         cmd_profile(client)
+    elif args.command == "banner":
+        cmd_banner(client, cfg)
+    elif args.command == "book":
+        cmd_book(client, cfg)
+    elif args.command == "video":
+        cmd_video(client, cfg)
+    elif args.command == "extra":
+        cmd_extra(client, cfg)
     else:
         parser.print_help()
 

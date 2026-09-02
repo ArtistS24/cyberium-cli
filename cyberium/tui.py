@@ -56,6 +56,7 @@ class CyberiumTUI:
         self.status_color = 1
         self.input_mode = False
         self.input_text = ""
+        self.q_type = "lab"  # "lab" or "extra"
         self.cursor_pos = 0
         self.profile_pts = 0
         self.profile_coins = 0
@@ -130,13 +131,14 @@ class CyberiumTUI:
                 break
 
         # Fetch Questions for Current Module
-        data = self.client.get_questions(self.module_id)
+        data = self.client.get_questions(self.module_id, q_type=self.q_type)
         if "error" in data:
             self.status_msg = f"Error: {data['error']}"
             self.status_color = 5
             self.questions = []
             return
 
+        type_label = "EXTRA CHALLENGES" if self.q_type == "extra" else "LABS"
         self.module_name = data.get("module_name", f"Module #{self.module_id}")
         self.total = data.get("total", 0)
         self.answered = data.get("answered_count", 0)
@@ -204,12 +206,13 @@ class CyberiumTUI:
             help_items = [
                 ("[↑/↓/j/k]", "Nav"),
                 ("[Enter/i]", "Answer"),
-                ("[Tab/d/u]", "Scroll"),
-                ("[c]", "Copy"),
                 ("[m]", "Modules"),
                 ("[P]", "Programs"),
+                ("[x]", "Extra" if self.q_type == "lab" else "Labs"),
+                ("[b]", "Book"),
+                ("[v]", "Video"),
+                ("[c]", "Copy"),
                 ("[p]", "Profile"),
-                ("[r]", "Refresh"),
                 ("[q]", "Quit"),
             ]
             x_pos = 1
@@ -573,6 +576,71 @@ class CyberiumTUI:
             elif key in (27, ord('q'), ord('Q'), ord('m'), ord('M')):
                 break
 
+    def show_media_popup(self, max_y, max_x, media_type):
+        """Show and open Course Book or Video Lecture link."""
+        if not self.client:
+            return
+        data = self.client.get_modules(self.program_id)
+        modules = data.get("modules", [])
+        curr_m = None
+        for m in modules:
+            if m.get("id") == self.module_id:
+                curr_m = m
+                break
+        if not curr_m:
+            return
+
+        name = curr_m.get("name", "")
+        pw = min(72, max_x - 4)
+        ph = 10
+        px = (max_x - pw) // 2
+        py = (max_y - ph) // 2
+
+        popup = curses.newwin(ph, pw, py, px)
+        popup.keypad(True)
+        popup.box()
+
+        if media_type == "book":
+            book_path = curr_m.get("book_url")
+            url = f"https://cyberium.academy/{book_path}" if book_path else None
+            safe_addstr(popup, 0, 2, " OFFICIAL COURSE BOOK (PDF) ", curses.color_pair(2) | curses.A_BOLD)
+            safe_addstr(popup, 2, 3, f"Module:   {name}", curses.color_pair(1) | curses.A_BOLD)
+            if url:
+                safe_addstr(popup, 4, 3, f"URL: {url[:pw-10]}", curses.color_pair(3))
+                safe_addstr(popup, 6, 3, "[o] Open in Browser/Reader │ [c] Copy Link │ [Esc] Close", curses.color_pair(4) | curses.A_BOLD)
+            else:
+                safe_addstr(popup, 4, 3, "No PDF book available for this module.", curses.color_pair(5))
+                safe_addstr(popup, 6, 3, "Press [Esc] to close", curses.color_pair(7))
+        else:
+            url = curr_m.get("video_url")
+            safe_addstr(popup, 0, 2, " HD VIDEO LECTURE ", curses.color_pair(2) | curses.A_BOLD)
+            safe_addstr(popup, 2, 3, f"Module:   {name}", curses.color_pair(1) | curses.A_BOLD)
+            if url:
+                safe_addstr(popup, 4, 3, f"Watch: {url[:pw-12]}", curses.color_pair(3))
+                safe_addstr(popup, 6, 3, "[o] Watch in Browser │ [c] Copy Stream Link │ [Esc] Close", curses.color_pair(4) | curses.A_BOLD)
+            else:
+                safe_addstr(popup, 4, 3, "No video lecture available for this module.", curses.color_pair(5))
+                safe_addstr(popup, 6, 3, "Press [Esc] to close", curses.color_pair(7))
+
+        popup.refresh()
+        while True:
+            k = popup.getch()
+            if k in (ord('o'), ord('O')) and url:
+                try:
+                    subprocess.Popen(["xdg-open", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    self.status_msg = f"Launched {media_type} in browser."
+                    self.status_color = 3
+                except Exception:
+                    pass
+                break
+            elif k in (ord('c'), ord('C')) and url:
+                if self.copy_to_clipboard(url):
+                    self.status_msg = f"Copied {media_type} URL to clipboard."
+                    self.status_color = 3
+                break
+            elif k in (27, 10, 13, ord('q'), ord('Q'), curses.KEY_ENTER):
+                break
+
     def handle_submit(self):
         answer = self.input_text.strip()
         if not answer:
@@ -589,7 +657,7 @@ class CyberiumTUI:
         self.status_color = 4
         self.render()
 
-        resp = self.client.submit_answer(self.module_id, q_idx, answer)
+        resp = self.client.submit_answer(self.module_id, q_idx, answer, q_type=self.q_type)
 
         if resp.get("correct"):
             self.status_msg = f"[✓] CORRECT! Points awarded for question #{q_idx}."
@@ -713,6 +781,17 @@ class CyberiumTUI:
                         else:
                             self.status_msg = "Question text ready."
                             self.status_color = 2
+                elif key in (ord('b'), ord('B')):
+                    max_y, max_x = self.stdscr.getmaxyx()
+                    self.show_media_popup(max_y, max_x, "book")
+                elif key in (ord('v'), ord('V')):
+                    max_y, max_x = self.stdscr.getmaxyx()
+                    self.show_media_popup(max_y, max_x, "video")
+                elif key in (ord('x'), ord('X')):
+                    self.q_type = "extra" if self.q_type == "lab" else "lab"
+                    self.status_msg = f"Switched mode to {'BONUS / EXTRA' if self.q_type == 'extra' else 'CORE LABS'}."
+                    self.status_color = 4
+                    self.fetch_data()
                 elif key in (ord('m'), ord('M')):
                     max_y, max_x = self.stdscr.getmaxyx()
                     self.show_modules_popup(max_y, max_x)

@@ -1,6 +1,6 @@
 """
-ANSI Styling and Nerd Font Terminal Presentation for Cyberium CLI
-Strictly Nerd Font / Terminal Glyphs (No Unicode Emojis)
+ANSI Styling, ASCII Art Branding, and Nerd Font Terminal Presentation
+Strictly clean terminal glyphs and high-contrast color formatting.
 """
 
 # ANSI Color Palette
@@ -24,6 +24,20 @@ ICON_POINTER = "►"
 ICON_USER = ""
 ICON_FOLDER = "󰉋"
 ICON_POINT = "◆"
+ICON_BOOK = "󰂿"
+ICON_VIDEO = "󰕧"
+ICON_STAR = "★"
+
+
+ASCII_BANNER = rf"""{CYAN}{BOLD}
+  ██████╗██╗   ██╗██████╗ ███████╗██████╗ ██╗██╗   ██╗███╗   ███╗
+ ██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║██║   ██║████╗ ████║
+ ██║      ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║██║   ██║██╔████╔██║
+ ██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══██╗██║██║   ██║██║╚██╔╝██║
+ ╚██████╗   ██║   ██████╔╝███████╗██║  ██║██║╚██████╔╝██║ ╚═╝ ██║
+  ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝     ╚═╝{RESET}
+{DIM}                 ACADEMY OFFENSIVE LAB CLIENT v2.0{RESET}
+"""
 
 
 def header(title, subtitle=None):
