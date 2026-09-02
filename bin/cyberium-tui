@@ -2,7 +2,11 @@
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Resolve symlinks to find the true project directory
+script_path = os.path.realpath(__file__)
+project_root = os.path.abspath(os.path.join(os.path.dirname(script_path), ".."))
+sys.path.insert(0, project_root)
+
 from cyberium.tui import start_tui
 
 if __name__ == "__main__":
