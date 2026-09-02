@@ -16,7 +16,6 @@ BOLD = "\033[1m"
 RESET = "\033[0m"
 
 # Nerd Font / Terminal Icons
-ICON_TARGET = "⌖"
 ICON_CHECK = "✓"
 ICON_CROSS = "✗"
 ICON_PENDING = ""
@@ -28,7 +27,7 @@ ICON_POINT = "◆"
 
 
 def header(title, subtitle=None):
-    out = f"\n{RED}{BOLD}{ICON_TARGET} CYBERIUM ACADEMY{RESET}"
+    out = f"\n{RED}{BOLD}CYBERIUM ACADEMY{RESET}"
     if title:
         out += f" {DIM}│{RESET} {WHITE}{BOLD}{title}{RESET}"
     if subtitle:
