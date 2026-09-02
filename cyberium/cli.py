@@ -1,5 +1,6 @@
 """
 Cyberium CLI Command Implementations
+Strict Nerd Font / Terminal Formatting
 """
 
 import sys
@@ -8,6 +9,7 @@ from .config import load_config, save_config, interactive_login
 from .api import CyberiumClient
 from .ui import (
     RED, GREEN, YELLOW, CYAN, WHITE, DIM, BOLD, RESET,
+    ICON_TARGET, ICON_CHECK, ICON_CROSS, ICON_PENDING, ICON_ARROW, ICON_POINTER, ICON_USER, ICON_FOLDER, ICON_POINT,
     header, divider, badge_success, badge_pending, badge_failed, badge_empty, progress_bar
 )
 
@@ -16,7 +18,7 @@ def ensure_client(cfg):
     """Ensures a valid authenticated CyberiumClient exists, prompting login if needed."""
     cookies = cfg.get("cookies", {})
     if not cookies or not cookies.get("connect.sid"):
-        print(f"\n{YELLOW}{BOLD}[!] No Cyberium student session detected.{RESET}")
+        print(f"\n{YELLOW}{BOLD}[{ICON_CROSS}] No Cyberium student session detected.{RESET}")
         print(f"{WHITE}Each student needs their own session cookies to submit answers.{RESET}\n")
         choice = input(f"{CYAN}Would you like to log in now? [Y/n]: {RESET}").strip().lower()
         if choice in ("", "y", "yes"):
@@ -36,7 +38,7 @@ def cmd_current(client, cfg):
     module_id = cfg.get("current_module_id", 88)
     q_data = client.get_questions(module_id)
     if "error" in q_data:
-        print(f"{RED}[!] Error: {q_data['error']}{RESET}")
+        print(f"{RED}[{ICON_CROSS}] Error: {q_data['error']}{RESET}")
         return
 
     mod_name = q_data.get("module_name", f"Module #{module_id}")
@@ -49,14 +51,14 @@ def cmd_current(client, cfg):
     print(header(mod_name, progress_str))
 
     if first_unanswered is None or first_unanswered >= len(questions):
-        print(f"{GREEN}{BOLD}[✓] All {total} questions in this module are completed!{RESET}\n")
+        print(f"{GREEN}{BOLD}[{ICON_CHECK}] All {total} questions in this module are completed!{RESET}\n")
         return
 
     curr_q = questions[first_unanswered]
     q_text = curr_q.get("text", "")
     q_idx = curr_q.get("index", first_unanswered)
 
-    print(f"{YELLOW}{BOLD}[⏳] CURRENT OBJECTIVE (Index {q_idx}):{RESET}")
+    print(f"{YELLOW}{BOLD}[{ICON_PENDING}] CURRENT OBJECTIVE (Index {q_idx}):{RESET}")
     print(f"  {WHITE}{BOLD}{q_text}{RESET}\n")
     print(f"{DIM}To submit your answer:{RESET}")
     print(f"  {CYAN}cyberium submit \"<your_answer>\"{RESET}\n")
@@ -66,7 +68,7 @@ def cmd_list(client, cfg):
     module_id = cfg.get("current_module_id", 88)
     q_data = client.get_questions(module_id)
     if "error" in q_data:
-        print(f"{RED}[!] Error: {q_data['error']}{RESET}")
+        print(f"{RED}[{ICON_CROSS}] Error: {q_data['error']}{RESET}")
         return
 
     mod_name = q_data.get("module_name", f"Module #{module_id}")
@@ -98,14 +100,14 @@ def cmd_submit(client, cfg, answer_str):
     module_id = cfg.get("current_module_id", 88)
     q_data = client.get_questions(module_id)
     if "error" in q_data:
-        print(f"{RED}[!] Error: {q_data['error']}{RESET}")
+        print(f"{RED}[{ICON_CROSS}] Error: {q_data['error']}{RESET}")
         return
 
     first_unanswered = q_data.get("first_unanswered")
     questions = q_data.get("questions", [])
 
     if first_unanswered is None or first_unanswered >= len(questions):
-        print(f"{GREEN}[✓] All questions in this module are already completed!{RESET}")
+        print(f"{GREEN}[{ICON_CHECK}] All questions in this module are already completed!{RESET}")
         return
 
     curr_q = questions[first_unanswered]
@@ -118,25 +120,25 @@ def cmd_submit(client, cfg, answer_str):
     resp = client.submit_answer(module_id, q_idx, answer_str)
 
     if resp.get("correct"):
-        print(f"{GREEN}{BOLD}[✓] CORRECT! Points awarded.{RESET}")
+        print(f"{GREEN}{BOLD}[{ICON_CHECK}] CORRECT! Points awarded.{RESET}")
         next_data = client.get_questions(module_id)
         next_idx = next_data.get("first_unanswered")
         if next_idx is not None and next_idx < len(next_data.get("questions", [])):
             nxt_q = next_data["questions"][next_idx]
-            print(f"\n{YELLOW}{BOLD}[⏳] NEXT OBJECTIVE (#{nxt_q.get('index')}):{RESET}")
+            print(f"\n{YELLOW}{BOLD}[{ICON_PENDING}] NEXT OBJECTIVE (#{nxt_q.get('index')}):{RESET}")
             print(f"  {WHITE}{BOLD}{nxt_q.get('text')}{RESET}\n")
     elif resp.get("already_answered"):
         print(f"{YELLOW}[!] This question was already answered.{RESET}\n")
     else:
         err_msg = resp.get("message") or resp.get("error") or "Incorrect answer. Try again."
-        print(f"{RED}{BOLD}[✗] {err_msg}{RESET}\n")
+        print(f"{RED}{BOLD}[{ICON_CROSS}] {err_msg}{RESET}\n")
 
 
 def cmd_modules(client, cfg):
     prog_id = cfg.get("current_program_id", 10)
     data = client.get_modules(prog_id)
     if "error" in data:
-        print(f"{RED}[!] Error: {data['error']}{RESET}")
+        print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
         return
 
     modules = data.get("modules", [])
@@ -151,7 +153,7 @@ def cmd_modules(client, cfg):
         correct = m.get("lab_correct", 0)
         total = m.get("lab_total", 0)
         pct = m.get("lab_correct_pct", 0)
-        active_mark = f"{YELLOW}►{RESET}" if mid == curr_mod else " "
+        active_mark = f"{YELLOW}{ICON_POINTER}{RESET}" if mid == curr_mod else " "
 
         print(f" {active_mark} {BOLD}#{order:<2}{RESET} {WHITE}{name:<30}{RESET} {DIM}ID: {mid:<3}│ Lab: {correct:>2}/{total:<2} ({pct}%){RESET}")
 
@@ -162,13 +164,13 @@ def cmd_modules(client, cfg):
 def cmd_set_module(cfg, mod_id):
     cfg["current_module_id"] = int(mod_id)
     save_config(cfg)
-    print(f"{GREEN}[✓] Active module set to ID {mod_id}.{RESET}")
+    print(f"{GREEN}[{ICON_CHECK}] Active module set to ID {mod_id}.{RESET}")
 
 
 def cmd_programs(client, cfg):
     programs = client.get_programs()
     if isinstance(programs, dict) and "error" in programs:
-        print(f"{RED}[!] Error: {programs['error']}{RESET}")
+        print(f"{RED}[{ICON_CROSS}] Error: {programs['error']}{RESET}")
         return
 
     curr_prog = cfg.get("current_program_id")
@@ -180,7 +182,7 @@ def cmd_programs(client, cfg):
         name = p.get("name", "")
         done_mods = p.get("completed_modules", 0)
         tot_mods = p.get("total_modules", 0)
-        active_mark = f"{YELLOW}►{RESET}" if pid == curr_prog else " "
+        active_mark = f"{YELLOW}{ICON_POINTER}{RESET}" if pid == curr_prog else " "
 
         print(f" {active_mark} {BOLD}{code:<8}{RESET} {WHITE}{name:<28}{RESET} {DIM}ID: {pid:<2}│ Modules: {done_mods}/{tot_mods}{RESET}")
 
@@ -191,13 +193,13 @@ def cmd_programs(client, cfg):
 def cmd_set_program(cfg, prog_id):
     cfg["current_program_id"] = int(prog_id)
     save_config(cfg)
-    print(f"{GREEN}[✓] Active program set to ID {prog_id}.{RESET}")
+    print(f"{GREEN}[{ICON_CHECK}] Active program set to ID {prog_id}.{RESET}")
 
 
 def cmd_profile(client):
     data = client.get_profile()
     if "error" in data:
-        print(f"{RED}[!] Error: {data['error']}{RESET}")
+        print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
         return
 
     ident = data.get("identity", {})

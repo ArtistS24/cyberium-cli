@@ -1,5 +1,6 @@
 """
-ANSI Styling and Terminal Presentation for Cyberium CLI
+ANSI Styling and Nerd Font Terminal Presentation for Cyberium CLI
+Strictly Nerd Font / Terminal Glyphs (No Unicode Emojis)
 """
 
 # ANSI Color Palette
@@ -14,9 +15,20 @@ DIM = "\033[0;90m"
 BOLD = "\033[1m"
 RESET = "\033[0m"
 
+# Nerd Font / Terminal Icons
+ICON_TARGET = "⌖"
+ICON_CHECK = "✓"
+ICON_CROSS = "✗"
+ICON_PENDING = ""
+ICON_ARROW = "❯"
+ICON_POINTER = "►"
+ICON_USER = ""
+ICON_FOLDER = "󰉋"
+ICON_POINT = "◆"
+
 
 def header(title, subtitle=None):
-    out = f"\n{RED}{BOLD}⌖ CYBERIUM ACADEMY{RESET}"
+    out = f"\n{RED}{BOLD}{ICON_TARGET} CYBERIUM ACADEMY{RESET}"
     if title:
         out += f" {DIM}│{RESET} {WHITE}{BOLD}{title}{RESET}"
     if subtitle:
@@ -30,15 +42,15 @@ def divider():
 
 
 def badge_success(text):
-    return f"{GREEN}[✓] {text}{RESET}"
+    return f"{GREEN}[{ICON_CHECK}] {text}{RESET}"
 
 
 def badge_pending(text):
-    return f"{YELLOW}{BOLD}[⏳] {text}{RESET}"
+    return f"{YELLOW}{BOLD}[{ICON_PENDING}] {text}{RESET}"
 
 
 def badge_failed(text):
-    return f"{RED}{BOLD}[✗] {text}{RESET}"
+    return f"{RED}{BOLD}[{ICON_CROSS}] {text}{RESET}"
 
 
 def badge_empty(text):
