@@ -243,6 +243,7 @@ def main():
     subparsers.add_parser("programs", help="List all enrolled programs")
     subparsers.add_parser("profile", help="Show student profile & score")
     subparsers.add_parser("login", help="Interactive login / cookie setup")
+    subparsers.add_parser("tui", help="Launch interactive full-screen TUI dashboard")
 
     submit_parser = subparsers.add_parser("submit", help="Submit answer to current question")
     submit_parser.add_argument("answer", nargs="+", help="The answer string to submit")
@@ -259,6 +260,11 @@ def main():
 
     if args.command == "login":
         interactive_login(cfg)
+        return
+
+    if args.command == "tui":
+        from .tui import start_tui
+        start_tui()
         return
 
     client = ensure_client(cfg)
