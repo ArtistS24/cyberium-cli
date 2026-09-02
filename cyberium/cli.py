@@ -9,7 +9,7 @@ from .config import load_config, save_config, interactive_login
 from .api import CyberiumClient
 from .ui import (
     RED, GREEN, YELLOW, CYAN, WHITE, DIM, BOLD, RESET,
-    ICON_TARGET, ICON_CHECK, ICON_CROSS, ICON_PENDING, ICON_ARROW, ICON_POINTER, ICON_USER, ICON_FOLDER, ICON_POINT,
+    ICON_CHECK, ICON_CROSS, ICON_PENDING, ICON_ARROW, ICON_POINTER, ICON_USER, ICON_FOLDER, ICON_POINT,
     header, divider, badge_success, badge_pending, badge_failed, badge_empty, progress_bar
 )
 
@@ -153,9 +153,20 @@ def cmd_modules(client, cfg):
         correct = m.get("lab_correct", 0)
         total = m.get("lab_total", 0)
         pct = m.get("lab_correct_pct", 0)
-        active_mark = f"{YELLOW}{ICON_POINTER}{RESET}" if mid == curr_mod else " "
+        is_open = m.get("is_open", True)
+        is_comp = m.get("lab_completed", False)
+        active_mark = f"{CYAN}{BOLD}❯{RESET}" if mid == curr_mod else " "
 
-        print(f" {active_mark} {BOLD}#{order:<2}{RESET} {WHITE}{name:<30}{RESET} {DIM}ID: {mid:<3}│ Lab: {correct:>2}/{total:<2} ({pct}%){RESET}")
+        if not is_open:
+            badge = f"{RED}[LOCKED]{RESET}"
+        elif is_comp:
+            badge = f"{GREEN}[✓ DONE]{RESET}"
+        elif total > 0:
+            badge = f"{YELLOW}[ {correct}/{total} ({pct}%)]" + RESET
+        else:
+            badge = f"{DIM}[THEORY]{RESET}"
+
+        print(f" {active_mark} {BOLD}#{order:<2}{RESET} {WHITE}{name:<28}{RESET} {badge:<22} {DIM}(ID: {mid}){RESET}")
 
     print(divider())
     print(f"{DIM}To switch module:{RESET} {CYAN}cyberium set-module <ID>{RESET}\n")
