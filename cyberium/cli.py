@@ -6,7 +6,7 @@ Equal capabilities with TUI: Multi-Program tracks, Extra Labs, Notes, Search, Th
 
 import sys
 import argparse
-from .config import load_config, save_config, interactive_login, get_note, save_note
+from .config import load_config, save_config, interactive_login, get_note, save_note, load_notes
 from .api import CyberiumClient
 from .ui import (
     RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, DIM, BOLD, RESET,
@@ -30,6 +30,57 @@ def ensure_client(cfg):
         else:
             sys.exit(1)
     return CyberiumClient(cfg)
+
+
+def resolve_question_target(client, cfg, target=None, q_type="lab"):
+    """
+    Intelligently resolves a question target into an integer question index.
+    Supports:
+    - None -> Current active unanswered question index
+    - Integer / string integer: "14", 14, "#14" -> 14
+    - Section number: "2.2", "2.2.", "1.10" -> Resolves to question index #14
+    Returns: (index, question_obj, module_name)
+    """
+    mod_id = cfg.get("current_module_id", 88)
+    data = client.get_questions(mod_id, q_type=q_type)
+    if "error" in data:
+        return None, None, f"Module #{mod_id}"
+
+    questions = data.get("questions", [])
+    mod_name = data.get("module_name", f"Module #{mod_id}")
+    first_unanswered = data.get("first_unanswered", 0)
+
+    # 1. No target specified -> default to current active question
+    if target is None or str(target).strip() == "":
+        idx = first_unanswered if first_unanswered is not None else (questions[0].get("index", 0) if questions else 0)
+        q_obj = None
+        for q in questions:
+            if q.get("index") == idx:
+                q_obj = q
+                break
+        return idx, q_obj, mod_name
+
+    target_str = str(target).strip().lstrip("#").rstrip(".")
+
+    # 2. Direct integer index
+    if target_str.isdigit():
+        idx = int(target_str)
+        for q in questions:
+            if q.get("index") == idx:
+                return idx, q, mod_name
+        return idx, None, mod_name
+
+    # 3. Section number match (e.g. '2.2', '1.10', '3.4')
+    for q in questions:
+        q_text = q.get("text", "").strip()
+        if (q_text.startswith(f"{target_str}.") or 
+            q_text.startswith(f"{target_str} ") or 
+            q_text.startswith(f"{target_str}:") or
+            q_text.startswith(f"{target_str} -") or
+            q_text.startswith(target_str)):
+            return q.get("index"), q, mod_name
+
+    return None, None, mod_name
 
 
 def cmd_current(client, cfg):
@@ -62,7 +113,8 @@ def cmd_current(client, cfg):
         print(f"  {WHITE}{BOLD}{text}{RESET}\n")
         if note:
             print(f"  {CYAN}{BOLD}󰉋 Personal Note:{RESET} {CYAN}{note}{RESET}\n")
-        print(f"{DIM}To submit your answer:{RESET} {CYAN}cyberium submit \"<your command or flag>\"{RESET}\n")
+        print(f"{DIM}To submit your answer:{RESET} {CYAN}cyberium submit \"<your command or flag>\"{RESET}")
+        print(f"{DIM}To attach a note:{RESET}      {YELLOW}cyberium note \"your memo here\"{RESET}\n")
     else:
         print(f"  {GREEN}{BOLD}[{ICON_CHECK}] All {total} lab questions in this module are COMPLETED!{RESET}\n")
 
@@ -113,7 +165,10 @@ def cmd_list(client, cfg, q_type="lab"):
 def cmd_submit(client, cfg, answer_str, q_index=None, q_type="lab"):
     mod_id = cfg.get("current_module_id", 88)
 
-    if q_index is None:
+    if q_index is not None:
+        idx, _, _ = resolve_question_target(client, cfg, q_index, q_type=q_type)
+        q_index = idx if idx is not None else q_index
+    else:
         data = client.get_questions(mod_id, q_type=q_type)
         if "error" in data:
             print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
@@ -417,22 +472,126 @@ def cmd_extra(client, cfg):
     cmd_list(client, cfg, q_type="extra")
 
 
-def cmd_note(cfg, args):
+def cmd_note(client, cfg, raw_args):
+    """
+    Super-friendly student question note manager.
+    Handles:
+      cyberium note                   -> View note for current active question
+      cyberium note "my note"         -> Save note to current active question
+      cyberium note 2.2               -> View note for question 2.2 (#14)
+      cyberium note 2.2 "my note"     -> Save note to question 2.2 (#14)
+      cyberium note 14 "my note"      -> Save note to question #14
+      cyberium note clear             -> Clear note for current active question
+      cyberium note 2.2 clear         -> Clear note for question 2.2 (#14)
+    """
     mod_id = cfg.get("current_module_id", 88)
-    q_idx = args.index
-    note_text = " ".join(args.text) if args.text else None
+    tokens = list(raw_args) if raw_args else []
 
-    if note_text is not None:
-        save_note(mod_id, q_idx, note_text)
-        print(f"{GREEN}[✓] Note saved for Question #{q_idx}.{RESET}\n")
-    else:
-        existing = get_note(mod_id, q_idx)
-        print(header("STUDENT SCRATCHPAD NOTE", f"Question #{q_idx}"))
-        if existing:
-            print(f"  {CYAN}{BOLD}󰉋 {existing}{RESET}\n")
+    target_idx = None
+    target_q = None
+    mod_name = f"Module #{mod_id}"
+    note_content = None
+
+    if not tokens:
+        # Case: cyberium note -> view active question note
+        target_idx, target_q, mod_name = resolve_question_target(client, cfg, None)
+    elif len(tokens) == 1:
+        tok = tokens[0].strip()
+        if tok.lower() in ("clear", "delete", "rm", "-d", "--clear"):
+            # Case: cyberium note clear
+            target_idx, target_q, mod_name = resolve_question_target(client, cfg, None)
+            note_content = ""
         else:
-            print(f"  {DIM}[No note attached to this question yet]{RESET}")
-            print(f"  {DIM}To save note:{RESET} {YELLOW}cyberium note {q_idx} \"your note here\"{RESET}\n")
+            # Check if tok is an index or section (e.g. '2.2' or '14')
+            idx, q, mname = resolve_question_target(client, cfg, tok)
+            if idx is not None and (tok.isdigit() or "." in tok or tok.startswith("#")):
+                target_idx, target_q, mod_name = idx, q, mname
+            else:
+                # Case: cyberium note "my note text" -> save to active question!
+                target_idx, target_q, mod_name = resolve_question_target(client, cfg, None)
+                note_content = tok
+    else:
+        # 2+ tokens
+        first_tok = tokens[0].strip()
+        idx, q, mname = resolve_question_target(client, cfg, first_tok)
+        if idx is not None and (first_tok.isdigit() or "." in first_tok or first_tok.startswith("#")):
+            # Case: cyberium note 2.2 "note text" OR cyberium note 2.2 clear
+            target_idx, target_q, mod_name = idx, q, mname
+            rest = " ".join(tokens[1:]).strip()
+            if rest.lower() in ("clear", "delete", "rm", "-d", "--clear"):
+                note_content = ""
+            else:
+                note_content = rest
+        else:
+            # Case: cyberium note multiple words without index -> save all to active question!
+            target_idx, target_q, mod_name = resolve_question_target(client, cfg, None)
+            note_content = " ".join(tokens).strip()
+
+    if target_idx is None:
+        print(f"{RED}[!] Could not resolve question.{RESET}\n")
+        return
+
+    q_label = f"#{target_idx}"
+    if target_q:
+        q_snippet = target_q.get("text", "").split("\n")[0][:48]
+        q_label += f" ({q_snippet}…)"
+
+    if note_content is not None:
+        save_note(mod_id, target_idx, note_content)
+        if note_content:
+            print(f"\n{GREEN}[✓] Saved personal note for Question {BOLD}{q_label}{RESET}:")
+            print(f"  {CYAN}󰉋 {note_content}{RESET}\n")
+        else:
+            print(f"\n{YELLOW}[✓] Cleared note for Question {BOLD}{q_label}{RESET}.\n")
+    else:
+        existing = get_note(mod_id, target_idx)
+        print(header("STUDENT SCRATCHPAD NOTE", f"Question {q_label}"))
+        if target_q:
+            print(f"  {DIM}Objective:{RESET} {WHITE}{target_q.get('text', '')}{RESET}\n")
+        if existing:
+            print(f"  {CYAN}{BOLD}󰉋 Personal Note:{RESET} {CYAN}{existing}{RESET}\n")
+            print(f"{DIM}To update:{RESET} {YELLOW}cyberium note {target_idx} \"new note\"{RESET}  {DIM}│  To clear:{RESET} {YELLOW}cyberium note {target_idx} clear{RESET}\n")
+        else:
+            print(f"  {DIM}[No note attached to this question yet]{RESET}\n")
+            print(f"{DIM}To attach a note:{RESET} {YELLOW}cyberium note \"your note here\"{RESET}\n")
+
+
+def cmd_notes(client, cfg):
+    """List all student scratchpad notes for current module."""
+    mod_id = cfg.get("current_module_id", 88)
+    data = client.get_questions(mod_id)
+    mod_name = data.get("module_name", f"Module #{mod_id}")
+    questions = data.get("questions", [])
+
+    all_notes = load_notes()
+    module_notes = []
+
+    for k, v in all_notes.items():
+        if k.startswith(f"{mod_id}_"):
+            try:
+                q_idx = int(k.split("_", 1)[1])
+            except ValueError:
+                continue
+            q_text = ""
+            for q in questions:
+                if q.get("index") == q_idx:
+                    q_text = q.get("text", "").split("\n")[0]
+                    break
+            module_notes.append((q_idx, q_text, v))
+
+    module_notes.sort(key=lambda x: x[0])
+
+    print(header("ALL SAVED SCRATCHPAD NOTES", mod_name))
+    if not module_notes:
+        print(f"  {DIM}[No saved notes in {mod_name} yet]{RESET}\n")
+        print(f"{DIM}To add a note to active question:{RESET} {CYAN}cyberium note \"your memo\"{RESET}\n")
+        return
+
+    for q_idx, q_text, note_text in module_notes:
+        snippet = f" {DIM}– {q_text[:36]}…{RESET}" if q_text else ""
+        print(f" {CYAN}󰉋 #{q_idx:<2}{RESET}{snippet}")
+        print(f"   {WHITE}{note_text}{RESET}\n")
+    print(divider() + f"\n{GREEN}Total notes: {len(module_notes)}{RESET}\n")
 
 
 def cmd_search(client, cfg, term):
@@ -498,7 +657,10 @@ def _run_cli():
   cyberium themes               # List 16 color palettes
   cyberium set-theme matrix     # Switch to matrix / classic theme
   cyberium stats                # Full operator rank, progress & stats
-  cyberium note 14 "memo"       # Save personal note for question #14
+  cyberium note "memo"          # Save note to current active question
+  cyberium note 2.2 "memo"      # Save note to question 2.2 (or #14)
+  cyberium note 2.2             # View note for question 2.2
+  cyberium notes                # View all saved notes across the module
   cyberium search "wget"        # Search questions by keyword
   cyberium book                 # View course PDF book link
   cyberium video                # View HD video lecture link
@@ -541,9 +703,9 @@ def _run_cli():
     search_parser = subparsers.add_parser("search", help="Search questions by keyword")
     search_parser.add_argument("term", help="Search term/keyword")
 
-    note_parser = subparsers.add_parser("note", help="Add or read question notes")
-    note_parser.add_argument("index", type=int, help="Question index")
-    note_parser.add_argument("text", nargs="*", help="Note text to save")
+    note_parser = subparsers.add_parser("note", aliases=["notes"], help="Add, view, or list question scratchpad notes")
+    note_parser.add_argument("params", nargs="*", help="[index_or_section] [note_text_or_clear]")
+    note_parser.add_argument("-a", "--all", action="store_true", help="List all notes across module")
 
     # Core
     subparsers.add_parser("login", help="Interactive login / cookie setup")
@@ -553,10 +715,10 @@ def _run_cli():
     submit_parser = subparsers.add_parser("submit", help="Submit answer to current question")
     submit_parser.add_argument("answer", nargs="+", help="The answer string to submit")
     submit_parser.add_argument("-x", "--extra", action="store_true", help="Submit to extra challenge instead of core lab")
-    submit_parser.add_argument("-i", "--index", type=int, default=None, help="Question index to submit to")
+    submit_parser.add_argument("-i", "--index", default=None, help="Question index or section (e.g. 14 or 2.2) to submit to")
 
     submit_extra_parser = subparsers.add_parser("submit-extra", help="Submit answer to extra/bonus challenge")
-    submit_extra_parser.add_argument("index", type=int, help="Extra challenge index")
+    submit_extra_parser.add_argument("index", help="Extra challenge index or section")
     submit_extra_parser.add_argument("answer", nargs="+", help="The answer string to submit")
 
     args = parser.parse_args()
@@ -605,8 +767,11 @@ def _run_cli():
         cmd_profile(client)
     elif args.command == "stats":
         cmd_stats(client, cfg)
-    elif args.command == "note":
-        cmd_note(cfg, args)
+    elif args.command in ("note", "notes"):
+        if getattr(args, "all", False) or args.command == "notes":
+            cmd_notes(client, cfg)
+        else:
+            cmd_note(client, cfg, args.params)
     elif args.command == "search":
         cmd_search(client, cfg, args.term)
     elif args.command == "banner":
