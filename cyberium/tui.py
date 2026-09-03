@@ -15,7 +15,7 @@ os.environ.setdefault("ESCDELAY", "25")
 
 from .config import load_config, save_config, get_note, save_note
 from .api import CyberiumClient
-from .ui import calculate_rank, THEMES, ICON_CY, ICON_LIVE
+from .ui import calculate_rank, THEMES, ICON_LIVE
 
 
 def safe_addstr(win, y, x, text, attr=0):
@@ -205,7 +205,7 @@ class CyberiumTUI:
     def draw_header(self, max_y, max_x):
         rank_title, _ = calculate_rank(self.profile_pts)
         type_badge = " [EXTRA]" if self.q_type == "extra" else ""
-        header_text = f" (Cy) C Y B E R I U M │ {self.unit_name} │ {self.program_name} › {self.module_name}{type_badge} "
+        header_text = f" C Y B E R I U M │ {self.unit_name} │ {self.program_name} › {self.module_name}{type_badge} "
         pct = int(self.answered / self.total * 100) if self.total > 0 else (100 if self.module_completed else 0)
         stats_text = f" {self.answered}/{self.total} Solved ({pct}%) │ {rank_title} • {self.profile_pts} pts ◆ {self.profile_coins} coins "
 
@@ -435,7 +435,7 @@ class CyberiumTUI:
 
         if self.status_msg:
             status_y = max_y - 4
-            safe_addstr(self.stdscr, status_y, card_x, f" (Cy) {self.status_msg}", curses.color_pair(self.status_color) | curses.A_BOLD)
+            safe_addstr(self.stdscr, status_y, card_x, f" 󰉋 {self.status_msg}", curses.color_pair(self.status_color) | curses.A_BOLD)
 
     def show_note_popup(self, max_y, max_x):
         """Add or edit personal scratchpad note for current question."""
@@ -594,7 +594,7 @@ class CyberiumTUI:
         popup = curses.newwin(ph, pw, py, px)
         popup.keypad(True)
         popup.box()
-        safe_addstr(popup, 0, 2, " (Cy) CYBERIUM ACADEMY │ OPERATOR DOSSIER ", curses.color_pair(2) | curses.A_BOLD)
+        safe_addstr(popup, 0, 2, " CYBERIUM ACADEMY │ OPERATOR DOSSIER ", curses.color_pair(2) | curses.A_BOLD)
         
         safe_addstr(popup, 2, 3, f"Operator: {name} ({scode})", curses.color_pair(1) | curses.A_BOLD)
         safe_addstr(popup, 2, 36, f"Division: {division} ({unit})", curses.color_pair(2))
@@ -842,7 +842,7 @@ class CyberiumTUI:
         if media_type == "book":
             book_path = curr_m.get("book_url")
             url = f"https://cyberium.academy/{book_path}" if book_path else None
-            safe_addstr(popup, 0, 2, " (Cy) OFFICIAL COURSE BOOK (PDF) ", curses.color_pair(2) | curses.A_BOLD)
+            safe_addstr(popup, 0, 2, " OFFICIAL COURSE BOOK (PDF) ", curses.color_pair(2) | curses.A_BOLD)
             safe_addstr(popup, 2, 3, f"Module:   {name}", curses.color_pair(1) | curses.A_BOLD)
             if url:
                 safe_addstr(popup, 4, 3, f"URL: {url[:pw-10]}", curses.color_pair(3))
@@ -852,7 +852,7 @@ class CyberiumTUI:
                 safe_addstr(popup, 6, 3, "Press [Esc] to close", curses.color_pair(7))
         else:
             url = curr_m.get("video_url")
-            safe_addstr(popup, 0, 2, " (Cy) HD VIDEO LECTURE ", curses.color_pair(2) | curses.A_BOLD)
+            safe_addstr(popup, 0, 2, " HD VIDEO LECTURE ", curses.color_pair(2) | curses.A_BOLD)
             safe_addstr(popup, 2, 3, f"Module:   {name}", curses.color_pair(1) | curses.A_BOLD)
             if url:
                 safe_addstr(popup, 4, 3, f"Watch: {url[:pw-12]}", curses.color_pair(3))

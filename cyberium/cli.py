@@ -1,6 +1,6 @@
 """
 Cyberium CLI Command Implementations
-Strict Nerd Font / Terminal Formatting
+Strict Terminal Formatting & Interactive Switching
 Equal capabilities with TUI: Multi-Program tracks, Extra Labs, Notes, Search, Themes.
 """
 
@@ -179,10 +179,53 @@ def cmd_modules(client, cfg):
     print(f"{DIM}To switch module:{RESET} {CYAN}cyberium set-module <ID>{RESET}\n")
 
 
-def cmd_set_module(cfg, mod_id):
-    cfg["current_module_id"] = int(mod_id)
+def cmd_set_module(client, cfg, mod_identifier=None):
+    prog_id = cfg.get("current_program_id", 10)
+    data = client.get_modules(prog_id)
+    modules = data.get("modules", [])
+
+    if mod_identifier is None:
+        print(header("SELECT MODULE TO ACTIVATE", f"Program #{prog_id}"))
+        for idx, m in enumerate(modules):
+            mid = m.get("id")
+            name = m.get("name", "")
+            order = m.get("sort_order", idx + 1)
+            is_open = m.get("is_open", True)
+            is_comp = m.get("lab_completed", False)
+            status = f"{GREEN}[DONE]{RESET}" if is_comp else (f"{CYAN}[OPEN]{RESET}" if is_open else f"{RED}[LOCKED]{RESET}")
+            print(f"  {BOLD}[{order}]{RESET} {WHITE}{name:<28}{RESET} {status} {DIM}(ID: {mid}){RESET}")
+        print(divider())
+        try:
+            choice = input(f"{YELLOW}Enter module number or ID to switch: {RESET}").strip()
+            if not choice:
+                return
+            mod_identifier = choice
+        except (KeyboardInterrupt, EOFError):
+            print()
+            return
+
+    target_mod = None
+    for m in modules:
+        if str(m.get("id")) == str(mod_identifier) or str(m.get("sort_order")) == str(mod_identifier):
+            target_mod = m
+            break
+
+    if not target_mod:
+        try:
+            mid = int(mod_identifier)
+            cfg["current_module_id"] = mid
+            save_config(cfg)
+            print(f"{GREEN}[{ICON_CHECK}] Active module set to ID {mid}.{RESET}\n")
+            return
+        except ValueError:
+            print(f"{RED}[!] Module '{mod_identifier}' not found in active program.{RESET}\n")
+            return
+
+    mid = target_mod.get("id")
+    name = target_mod.get("name", "")
+    cfg["current_module_id"] = mid
     save_config(cfg)
-    print(f"{GREEN}[{ICON_CHECK}] Active module set to ID {mod_id}.{RESET}")
+    print(f"{GREEN}[{ICON_CHECK}] Switched to Module {BOLD}#{target_mod.get('sort_order')} {name}{RESET} (ID: {mid})\n")
 
 
 def cmd_programs(client, cfg):
@@ -194,7 +237,7 @@ def cmd_programs(client, cfg):
     programs = data if isinstance(data, list) else data.get("programs", [])
     curr_prog = cfg.get("current_program_id", 10)
 
-    print(header("ENROLLED TRAINING PROGRAMS"))
+    print(header("ENROLLED SPECIALIZATION TRACKS (14 Tracks Available)"))
 
     for p in programs:
         pid = p.get("id")
@@ -210,15 +253,37 @@ def cmd_programs(client, cfg):
         print(f" {active_mark} {BOLD}{code:<6}{RESET} {WHITE}{name:<28}{RESET} {p_bar} {DIM}(Lvl {lvl}) [ID: {pid}]{RESET}")
 
     print(divider())
-    print(f"{DIM}To switch program:{RESET} {CYAN}cyberium set-program <ID or CODE>{RESET}\n")
+    print(f"{DIM}To switch track:{RESET} {CYAN}cyberium switch <CODE or ID>{RESET}  {DIM}(e.g. cyberium switch ZX301 or cyberium switch 7){RESET}\n")
 
 
-def cmd_set_program(client, cfg, prog_identifier):
+def cmd_set_program(client, cfg, prog_identifier=None):
     data = client.get_programs()
     programs = data if isinstance(data, list) else data.get("programs", [])
-    
+
+    if prog_identifier is None:
+        curr_prog = cfg.get("current_program_id", 10)
+        print(header("SELECT TRAINING TRACK TO ACTIVATE"))
+        for idx, p in enumerate(programs, start=1):
+            pid = p.get("id")
+            code = p.get("code", "")
+            name = p.get("name", "")
+            lvl = p.get("level", 1)
+            mark = f"{CYAN}●{RESET}" if pid == curr_prog else " "
+            print(f" {mark} {BOLD}[{idx:>2}]{RESET} {CYAN}{code:<6}{RESET} {WHITE}{name:<26}{RESET} {DIM}(Lvl {lvl}) [ID: {pid}]{RESET}")
+        print(divider())
+        try:
+            choice = input(f"{YELLOW}Enter track number [1-{len(programs)}] or Code (e.g. ZX310): {RESET}").strip()
+            if not choice:
+                return
+            if choice.isdigit() and 1 <= int(choice) <= len(programs):
+                prog_identifier = programs[int(choice) - 1].get("id")
+            else:
+                prog_identifier = choice
+        except (KeyboardInterrupt, EOFError):
+            print()
+            return
+
     target_prog = None
-    # Check if user passed integer ID or string Code (e.g. 10 or ZX310)
     for p in programs:
         if str(p.get("id")) == str(prog_identifier) or p.get("code", "").lower() == str(prog_identifier).lower():
             target_prog = p
@@ -226,6 +291,7 @@ def cmd_set_program(client, cfg, prog_identifier):
 
     if not target_prog:
         print(f"{RED}[!] Program '{prog_identifier}' not found in your enrolled tracks.{RESET}")
+        print(f"{DIM}Run {CYAN}cyberium programs{DIM} to view all 14 available tracks.{RESET}\n")
         return
 
     pid = target_prog.get("id")
@@ -248,11 +314,11 @@ def cmd_set_program(client, cfg, prog_identifier):
     if chosen_mod:
         cfg["current_module_id"] = chosen_mod.get("id")
         save_config(cfg)
-        print(f"{GREEN}[{ICON_CHECK}] Switched to Program {BOLD}{code} {name}{RESET} (ID: {pid})")
+        print(f"\n{GREEN}[{ICON_CHECK}] Switched to Program {BOLD}{code} {name}{RESET} (ID: {pid})")
         print(f"  {CYAN}Active Module:{RESET} {chosen_mod.get('name')} (ID: {chosen_mod.get('id')})\n")
     else:
         save_config(cfg)
-        print(f"{GREEN}[{ICON_CHECK}] Switched to Program {BOLD}{code} {name}{RESET} (ID: {pid})\n")
+        print(f"\n{GREEN}[{ICON_CHECK}] Switched to Program {BOLD}{code} {name}{RESET} (ID: {pid})\n")
 
 
 def cmd_profile(client):
@@ -395,11 +461,11 @@ def cmd_search(client, cfg, term):
 
 
 def cmd_themes(cfg):
-    current = cfg.get("theme", "cyberpunk")
+    current = cfg.get("theme", "cyberium")
     print(header("AVAILABLE TERMINAL THEMES"))
     for tid, info in THEMES.items():
         mark = f"{CYAN}{BOLD}❯{RESET}" if tid == current else " "
-        print(f" {mark} {BOLD}{tid:<12}{RESET} {WHITE}{info['name']:<28}{RESET} {DIM}– {info['desc']}{RESET}")
+        print(f" {mark} {BOLD}{tid:<14}{RESET} {WHITE}{info['name']:<28}{RESET} {DIM}– {info['desc']}{RESET}")
     print(divider())
     print(f"{DIM}To switch theme:{RESET} {CYAN}cyberium set-theme <name>{RESET}\n")
 
@@ -423,19 +489,20 @@ def main():
   cyberium list                 # List all questions and statuses
   cyberium submit "grep -rl"    # Submit answer to current question
   cyberium submit-extra 1 "ans" # Submit answer to bonus/extra challenge #1
+  cyberium switch ZX301         # Switch to Penetration Testing track
+  cyberium switch               # Interactive track selector
+  cyberium set-module           # Interactive module selector
   cyberium modules              # List modules in active program
-  cyberium set-module 88        # Switch to Module 88
-  cyberium programs             # List enrolled programs
-  cyberium set-program ZX310    # Switch to Program ZX310 / ID 10
+  cyberium programs             # List all 14 enrolled programs
   cyberium extra                # View bonus / extra challenges
-  cyberium themes               # List color palettes
+  cyberium themes               # List 16 color palettes
   cyberium set-theme matrix     # Switch to matrix / classic theme
   cyberium stats                # Full operator rank, progress & stats
   cyberium note 14 "memo"       # Save personal note for question #14
   cyberium search "wget"        # Search questions by keyword
   cyberium book                 # View course PDF book link
   cyberium video                # View HD video lecture link
-  cyberium profile              # View student profile & points
+  cyberium profile              # View student dossier & points
   cyberium tui                  # Launch full-screen interactive TUI
   cyberium login                # Update session cookies
 """
@@ -444,19 +511,33 @@ def main():
 
     subparsers.add_parser("status", aliases=["current", "show"], help="Show current question & progress (default)")
     subparsers.add_parser("list", help="List all questions in current module")
+    
+    # Modules
     subparsers.add_parser("modules", help="List all modules in current program")
-    subparsers.add_parser("programs", help="List all enrolled programs")
+    set_mod_parser = subparsers.add_parser("set-module", aliases=["module"], help="Set or choose active module")
+    set_mod_parser.add_argument("id", nargs="?", default=None, help="Module ID or Order number (interactive if empty)")
+
+    # Programs / Tracks
+    subparsers.add_parser("programs", aliases=["tracks"], help="List all enrolled programs")
+    set_prog_parser = subparsers.add_parser("set-program", aliases=["program", "switch", "track"], help="Switch active track/program (interactive if empty)")
+    set_prog_parser.add_argument("id", nargs="?", default=None, help="Program ID or Code (e.g. 10 or ZX310)")
+
+    # Profile & Stats
     subparsers.add_parser("profile", help="Show student profile & score")
     subparsers.add_parser("stats", help="Full student operator dashboard & rank")
     subparsers.add_parser("banner", help="Display Cyberium ASCII banner & stats")
+    
+    # Media & Addons
     subparsers.add_parser("book", help="Get official course PDF book link")
     subparsers.add_parser("video", help="Get HD video lecture streaming link")
     subparsers.add_parser("extra", help="List bonus/extra challenges")
+
+    # Themes
     subparsers.add_parser("themes", help="List all available terminal themes")
+    set_theme_parser = subparsers.add_parser("set-theme", aliases=["theme"], help="Set active terminal theme")
+    set_theme_parser.add_argument("name", help="Theme name (cyberium, catppuccin, matrix, nord, dracula, classic, etc.)")
 
-    set_theme_parser = subparsers.add_parser("set-theme", help="Set active terminal theme")
-    set_theme_parser.add_argument("name", help="Theme name (cyberpunk, catppuccin, matrix, nord, monokai, classic)")
-
+    # Search & Notes
     search_parser = subparsers.add_parser("search", help="Search questions by keyword")
     search_parser.add_argument("term", help="Search term/keyword")
 
@@ -464,9 +545,11 @@ def main():
     note_parser.add_argument("index", type=int, help="Question index")
     note_parser.add_argument("text", nargs="*", help="Note text to save")
 
+    # Core
     subparsers.add_parser("login", help="Interactive login / cookie setup")
     subparsers.add_parser("tui", help="Launch interactive full-screen TUI dashboard")
 
+    # Submission
     submit_parser = subparsers.add_parser("submit", help="Submit answer to current question")
     submit_parser.add_argument("answer", nargs="+", help="The answer string to submit")
     submit_parser.add_argument("-x", "--extra", action="store_true", help="Submit to extra challenge instead of core lab")
@@ -475,12 +558,6 @@ def main():
     submit_extra_parser = subparsers.add_parser("submit-extra", help="Submit answer to extra/bonus challenge")
     submit_extra_parser.add_argument("index", type=int, help="Extra challenge index")
     submit_extra_parser.add_argument("answer", nargs="+", help="The answer string to submit")
-
-    set_mod_parser = subparsers.add_parser("set-module", help="Set active module ID")
-    set_mod_parser.add_argument("id", type=int, help="Module ID")
-
-    set_prog_parser = subparsers.add_parser("set-program", help="Set active program ID or Code (e.g. 10 or ZX310)")
-    set_prog_parser.add_argument("id", help="Program ID or Code")
 
     args = parser.parse_args()
 
@@ -499,7 +576,7 @@ def main():
         cmd_themes(cfg)
         return
 
-    if args.command == "set-theme":
+    if args.command in ("set-theme", "theme"):
         cmd_set_theme(cfg, args.name)
         return
 
@@ -518,11 +595,11 @@ def main():
         cmd_submit(client, cfg, answer_str, q_index=args.index, q_type="extra")
     elif args.command == "modules":
         cmd_modules(client, cfg)
-    elif args.command == "set-module":
-        cmd_set_module(cfg, args.id)
-    elif args.command == "programs":
+    elif args.command in ("set-module", "module"):
+        cmd_set_module(client, cfg, args.id)
+    elif args.command in ("programs", "tracks"):
         cmd_programs(client, cfg)
-    elif args.command == "set-program":
+    elif args.command in ("set-program", "program", "switch", "track"):
         cmd_set_program(client, cfg, args.id)
     elif args.command == "profile":
         cmd_profile(client)
