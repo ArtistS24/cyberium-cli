@@ -376,21 +376,21 @@ def cmd_book(client, cfg):
     prog_id = cfg.get("current_program_id", 10)
     data = client.get_modules(prog_id)
     modules = data.get("modules", [])
+    mod_name = f"Module #{mod_id}"
     for m in modules:
         if m.get("id") == mod_id:
-            name = m.get("name", "")
-            book_url = m.get("book_url")
-            print(header("COURSE BOOK", name))
-            if book_url:
-                full_url = f"https://cyberium.academy/{book_url}"
-                print(f"  {BOLD}Module:{RESET}     {WHITE}{name}{RESET}")
-                print(f"  {BOLD}PDF Path:{RESET}   {CYAN}{book_url}{RESET}")
-                print(f"  {BOLD}Direct URL:{RESET} {YELLOW}{full_url}{RESET}")
-                print(f"\n{DIM}To open in browser/reader:{RESET} {CYAN}xdg-open '{full_url}'{RESET}\n")
-            else:
-                print(f"  {YELLOW}[!] No PDF book available for this module.{RESET}\n")
-            return
-    print(f"{RED}[!] Module #{mod_id} not found.{RESET}\n")
+            mod_name = m.get("name", mod_name)
+            break
+
+    resp = client.get_book(mod_id)
+    url = resp.get("url")
+    if url:
+        print(header("OFFICIAL COURSE BOOK (PDF)", mod_name))
+        print(f"  {BOLD}Module:{RESET}          {WHITE}{mod_name}{RESET}")
+        print(f"  {BOLD}Direct PDF Link:{RESET} {CYAN}{url}{RESET}")
+        print(f"\n{DIM}To open in browser/reader:{RESET} {YELLOW}xdg-open '{url}'{RESET}\n")
+    else:
+        print(f"{RED}[!] No PDF course book available for {mod_name}.{RESET}\n")
 
 
 def cmd_video(client, cfg):
