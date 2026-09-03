@@ -8,11 +8,22 @@ Supports:
 
 import os
 import json
-import sys
+import tempfile
 from .ui import RED, GREEN, YELLOW, CYAN, WHITE, DIM, BOLD, RESET, header, divider
 
 CONFIG_DIR = os.path.expanduser("~/.config/cyberium")
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
+NOTES_PATH = os.path.join(CONFIG_DIR, "notes.json")
+
+
+def _atomic_json_write(filepath, data):
+    """Safely and atomically writes JSON to disk to avoid corruption."""
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    temp_dir = os.path.dirname(filepath)
+    with tempfile.NamedTemporaryFile("w", dir=temp_dir, delete=False) as tf:
+        json.dump(data, tf, indent=2)
+        temp_name = tf.name
+    os.replace(temp_name, filepath)
 
 
 def parse_env_file(filepath):
@@ -54,14 +65,14 @@ def load_config():
         try:
             with open(CONFIG_PATH, "r") as f:
                 saved = json.load(f)
-                config.update(saved)
+                if isinstance(saved, dict):
+                    config.update(saved)
         except Exception:
             pass
 
     # 2. Local .env file in cwd or project root
     local_env = parse_env_file(".env")
     if not local_env:
-        # Check project root if invoked via symlink
         script_root = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
         project_env_path = os.path.join(script_root, ".env")
         if os.path.exists(project_env_path):
@@ -101,9 +112,10 @@ def load_config():
 
 
 def save_config(cfg):
-    os.makedirs(CONFIG_DIR, exist_ok=True)
-    with open(CONFIG_PATH, "w") as f:
-        json.dump(cfg, f, indent=2)
+    try:
+        _atomic_json_write(CONFIG_PATH, cfg)
+    except Exception as e:
+        print(f"{RED}[!] Failed to save config: {e}{RESET}")
 
 
 def interactive_login(cfg=None):
@@ -142,15 +154,13 @@ def interactive_login(cfg=None):
     return True
 
 
-NOTES_PATH = os.path.join(CONFIG_DIR, "notes.json")
-
-
 def load_notes():
     """Load user notes dictionary from ~/.config/cyberium/notes.json."""
     if os.path.exists(NOTES_PATH):
         try:
             with open(NOTES_PATH, "r") as f:
-                return json.load(f)
+                data = json.load(f)
+                return data if isinstance(data, dict) else {}
         except Exception:
             pass
     return {}
@@ -165,13 +175,14 @@ def get_note(module_id, question_index):
 
 def save_note(module_id, question_index, note_text):
     """Save or update personal note for a specific question."""
-    os.makedirs(CONFIG_DIR, exist_ok=True)
     notes = load_notes()
     key = f"{module_id}_{question_index}"
-    if note_text.strip():
-        notes[key] = note_text.strip()
+    note_str = str(note_text).strip() if note_text is not None else ""
+    if note_str:
+        notes[key] = note_str
     elif key in notes:
         del notes[key]
-    with open(NOTES_PATH, "w") as f:
-        json.dump(notes, f, indent=2)
-
+    try:
+        _atomic_json_write(NOTES_PATH, notes)
+    except Exception as e:
+        print(f"{RED}[!] Failed to save note: {e}{RESET}")
