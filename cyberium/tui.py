@@ -2,7 +2,7 @@
 Cyberium Academy Interactive Terminal User Interface (TUI)
 Built with Python Standard Library Curses (Zero External Dependencies)
 Features:
-- Live Theme Selector ([t]) for all terminal types (Standard Linux ANSI, Matrix, Catppuccin, Nord, Cyberpunk)
+- Live 16-Theme Selector ([t]) matching GNOME & Rice themes (Dracula, Tokyo Night, Gruvbox, Everforest, Rosé Pine, Kanagawa, Matrix, Nord, Monokai, Classic ANSI)
 - Real-time Live Search & Filter (/)
 - Personal Question Scratchpad Notes ([n])
 - Official Course Book PDF links ([b])
@@ -100,61 +100,23 @@ class CyberiumTUI:
         if not curses.has_colors():
             return
 
-        t_data = THEMES.get(self.theme_name, THEMES["cyberpunk"])
-        t_col = t_data.get("colors", {})
+        color_map = {
+            "white": curses.COLOR_WHITE,
+            "cyan": curses.COLOR_CYAN,
+            "green": curses.COLOR_GREEN,
+            "yellow": curses.COLOR_YELLOW,
+            "red": curses.COLOR_RED,
+            "magenta": curses.COLOR_MAGENTA,
+            "blue": curses.COLOR_BLUE,
+            "dim": 8 if curses.COLORS >= 16 else curses.COLOR_BLACK,
+            "black": curses.COLOR_BLACK,
+        }
 
-        # Standard palette mapping
-        # 1: Text, 2: Accent, 3: Solved, 4: Active, 5: Locked, 6: Badge, 7: Border
-        if self.theme_name == "matrix":
-            curses.init_pair(1, curses.COLOR_GREEN, -1)
-            curses.init_pair(2, curses.COLOR_GREEN, -1)
-            curses.init_pair(3, curses.COLOR_WHITE, -1)
-            curses.init_pair(4, curses.COLOR_YELLOW, -1)
-            curses.init_pair(5, curses.COLOR_RED, -1)
-            curses.init_pair(6, curses.COLOR_GREEN, -1)
-            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_BLACK, -1)
-        elif self.theme_name == "nord":
-            curses.init_pair(1, curses.COLOR_WHITE, -1)
-            curses.init_pair(2, curses.COLOR_CYAN, -1)
-            curses.init_pair(3, curses.COLOR_GREEN, -1)
-            curses.init_pair(4, curses.COLOR_BLUE, -1)
-            curses.init_pair(5, curses.COLOR_RED, -1)
-            curses.init_pair(6, curses.COLOR_CYAN, -1)
-            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_WHITE, -1)
-        elif self.theme_name == "monokai":
-            curses.init_pair(1, curses.COLOR_WHITE, -1)
-            curses.init_pair(2, curses.COLOR_YELLOW, -1)
-            curses.init_pair(3, curses.COLOR_GREEN, -1)
-            curses.init_pair(4, curses.COLOR_CYAN, -1)
-            curses.init_pair(5, curses.COLOR_RED, -1)
-            curses.init_pair(6, curses.COLOR_MAGENTA, -1)
-            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_BLACK, -1)
-        elif self.theme_name == "classic":
-            # Pure ANSI 8-color fallback for basic terminals
-            curses.init_pair(1, curses.COLOR_WHITE, -1)
-            curses.init_pair(2, curses.COLOR_CYAN, -1)
-            curses.init_pair(3, curses.COLOR_GREEN, -1)
-            curses.init_pair(4, curses.COLOR_YELLOW, -1)
-            curses.init_pair(5, curses.COLOR_RED, -1)
-            curses.init_pair(6, curses.COLOR_WHITE, -1)
-            curses.init_pair(7, curses.COLOR_WHITE, -1)
-        elif self.theme_name == "catppuccin":
-            curses.init_pair(1, curses.COLOR_WHITE, -1)
-            curses.init_pair(2, curses.COLOR_CYAN, -1)
-            curses.init_pair(3, curses.COLOR_GREEN, -1)
-            curses.init_pair(4, curses.COLOR_YELLOW, -1)
-            curses.init_pair(5, curses.COLOR_RED, -1)
-            curses.init_pair(6, curses.COLOR_MAGENTA, -1)
-            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_BLUE, -1)
-        else:
-            # Default Cyberpunk
-            curses.init_pair(1, curses.COLOR_WHITE, -1)
-            curses.init_pair(2, curses.COLOR_CYAN, -1)
-            curses.init_pair(3, curses.COLOR_GREEN, -1)
-            curses.init_pair(4, curses.COLOR_YELLOW, -1)
-            curses.init_pair(5, curses.COLOR_RED, -1)
-            curses.init_pair(6, curses.COLOR_MAGENTA, -1)
-            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_BLACK, -1)
+        t_data = THEMES.get(self.theme_name, THEMES["cyberpunk"])
+        for pair_idx in range(1, 8):
+            col_name = t_data.get(f"pair{pair_idx}", "white")
+            fg_col = color_map.get(col_name, curses.COLOR_WHITE)
+            curses.init_pair(pair_idx, fg_col, -1)
 
     def authenticate(self):
         try:
@@ -539,14 +501,15 @@ class CyberiumTUI:
                 cursor_pos += 1
 
     def show_themes_popup(self, max_y, max_x):
-        """Theme selector modal supporting standard ANSI terminals and modern palettes."""
+        """Scrollable 16-Theme Selector Modal."""
         theme_keys = list(THEMES.keys())
-        pw = min(72, max_x - 4)
-        ph = min(14, max_y - 4)
+        pw = min(74, max_x - 4)
+        ph = min(16, max_y - 4)
         px = (max_x - pw) // 2
         py = (max_y - ph) // 2
 
         sel_t = 0
+        theme_scroll = 0
         for idx, k in enumerate(theme_keys):
             if k == self.theme_name:
                 sel_t = idx
@@ -556,16 +519,26 @@ class CyberiumTUI:
             popup = curses.newwin(ph, pw, py, px)
             popup.keypad(True)
             popup.box()
-            safe_addstr(popup, 0, 2, " TERMINAL THEMES & COMPATIBILITY ", curses.color_pair(2) | curses.A_BOLD)
+            safe_addstr(popup, 0, 2, " TERMINAL THEMES & DESKTOP RICE PALETTES ", curses.color_pair(2) | curses.A_BOLD)
 
-            for row, tid in enumerate(theme_keys):
+            visible_count = ph - 4
+            if sel_t < theme_scroll:
+                theme_scroll = sel_t
+            elif sel_t >= theme_scroll + visible_count:
+                theme_scroll = sel_t - visible_count + 1
+
+            for row in range(visible_count):
+                t_idx = theme_scroll + row
+                if t_idx >= len(theme_keys):
+                    break
+                tid = theme_keys[t_idx]
                 info = THEMES[tid]
                 t_name = info.get("name", tid)
                 t_desc = info.get("desc", "")[:28]
                 mark = "●" if tid == self.theme_name else "○"
 
-                line_str = f" {mark} {t_name:<26} │ {t_desc}"
-                if row == sel_t:
+                line_str = f" {mark} {t_name:<24} │ {t_desc}"
+                if t_idx == sel_t:
                     safe_addstr(popup, 2 + row, 2, line_str[:pw - 4], curses.color_pair(2) | curses.A_REVERSE | curses.A_BOLD)
                 else:
                     safe_addstr(popup, 2 + row, 2, line_str[:pw - 4], curses.color_pair(1))
