@@ -45,7 +45,8 @@ def load_config():
     config = {
         "cookies": {},
         "current_program_id": 10,
-        "current_module_id": 88
+        "current_module_id": 88,
+        "theme": "cyberium"
     }
 
     # 1. Base config from ~/.config/cyberium/config.json

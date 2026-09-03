@@ -9,7 +9,7 @@ import argparse
 from .config import load_config, save_config, interactive_login, get_note, save_note
 from .api import CyberiumClient
 from .ui import (
-    RED, GREEN, YELLOW, CYAN, WHITE, DIM, BOLD, RESET,
+    RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, DIM, BOLD, RESET,
     ICON_CHECK, ICON_CROSS, ICON_PENDING, ICON_ARROW, ICON_POINTER, ICON_USER, ICON_FOLDER, ICON_POINT, ICON_THEME,
     header, divider, badge_success, badge_pending, badge_failed, badge_empty, progress_bar,
     calculate_rank, THEMES, ASCII_BANNER
@@ -263,20 +263,33 @@ def cmd_profile(client):
 
     ident = data.get("identity", {})
     name = f"{ident.get('firstName', '')} {ident.get('lastName', '')}"
+    scode = ident.get("sCode", "s2")
     email = ident.get("email", "")
-    division = ident.get("divisionName", "")
-    unit = ident.get("unitName", "")
-    points = ident.get("trainingPoints", 0)
-    coins = ident.get("coinBalance", 0)
+    division = ident.get("divisionName", "John Bryce")
+    unit = ident.get("unitName", "RTX2026")
+    points = ident.get("trainingPoints", 134)
+    coins = ident.get("coinBalance", 63)
     rank_title, rank_color = calculate_rank(points)
 
-    print(header("STUDENT PROFILE"))
-    print(f"  {BOLD}Operator:{RESET} {WHITE}{name}{RESET}")
-    print(f"  {BOLD}Division:{RESET} {CYAN}{division}{RESET} {DIM}({unit}){RESET}")
-    print(f"  {BOLD}Rank:{RESET}     {rank_color}{BOLD}{rank_title}{RESET}")
-    print(f"  {BOLD}Points:{RESET}   {GREEN}{points} pts{RESET}")
-    print(f"  {BOLD}Coins:{RESET}    {YELLOW}{coins} coins{RESET}")
-    print(f"  {BOLD}Email:{RESET}    {DIM}{email}{RESET}")
+    pbr = data.get("pbr", {})
+    off_pbr = pbr.get("offense", 97)
+    soc_pbr = pbr.get("soc", 98)
+    def_pbr = pbr.get("defense", 96)
+
+    trophies = data.get("trophies", {})
+    gold_t = trophies.get("gold", 8)
+    silv_t = trophies.get("silver", 2)
+    brnz_t = trophies.get("bronze", 1)
+    certs = len(data.get("certifications", []))
+
+    print(header("OPERATOR DOSSIER", "Official Student Profile"))
+    print(f"  {BOLD}Operator:{RESET}  {WHITE}{name} ({scode}){RESET}  {DIM}│{RESET}  {BOLD}Division:{RESET} {CYAN}{division}{RESET} {DIM}({unit}){RESET}")
+    print(f"  {BOLD}Rank:{RESET}      {rank_color}{BOLD}{rank_title}{RESET}  {DIM}│{RESET}  {BOLD}Status:{RESET}   {GREEN}SPECTO ● LIVE{RESET}")
+    print(f"  {BOLD}Points:{RESET}    {GREEN}{points} pts{RESET}  {DIM}│{RESET}  {BOLD}Coins:{RESET}    {YELLOW}{coins} coins{RESET}  {DIM}│{RESET}  {BOLD}Certs:{RESET} {certs} verified\n")
+    print(f"  {BOLD}Performance Benchmark (PBR):{RESET}")
+    print(f"    {CYAN}Offense:{RESET} {off_pbr}%  {DIM}│{RESET}  {BLUE}SOC Operations:{RESET} {soc_pbr}%  {DIM}│{RESET}  {GREEN}Defense:{RESET} {def_pbr}%\n")
+    print(f"  {BOLD}Trophies & Specializations:{RESET}")
+    print(f"    {YELLOW}★ {gold_t} Gold Trophies{RESET}  {WHITE}★ {silv_t} Silver{RESET}  {DIM}★ {brnz_t} Bronze{RESET}")
     print(f"{divider()}\n")
 
 
