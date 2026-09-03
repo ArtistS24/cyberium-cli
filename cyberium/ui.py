@@ -1,6 +1,6 @@
 """
-ANSI Styling, ASCII Art Branding, and Nerd Font Terminal Presentation
-Strictly clean terminal glyphs, expanded theme palettes, and high-contrast color formatting.
+ANSI Styling, Cyberium Official Theme, and Nerd Font Presentation
+Matches the official dark obsidian & electric cyan Cyberium Academy dashboard.
 """
 
 # ANSI Color Palette
@@ -24,32 +24,58 @@ ICON_POINTER = "►"
 ICON_USER = ""
 ICON_FOLDER = "󰉋"
 ICON_POINT = "◆"
+ICON_STAR = "★"
 ICON_BOOK = "󰂿"
 ICON_VIDEO = "󰕧"
-ICON_STAR = "★"
 ICON_THEME = "󰏘"
+ICON_LIVE = "●"
+ICON_CY = "(Cy)"
 
-ASCII_BANNER = rf"""{CYAN}{BOLD}
-  ██████╗██╗   ██╗██████╗ ███████╗██████╗ ██╗██╗   ██╗███╗   ███╗
- ██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║██║   ██║████╗ ████║
- ██║      ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║██║   ██║██╔████╔██║
- ██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══██╗██║██║   ██║██║╚██╔╝██║
- ╚██████╗   ██║   ██████╔╝███████╗██║  ██║██║╚██████╔╝██║ ╚═╝ ██║
-  ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝     ╚═╝{RESET}
-{DIM}                 ACADEMY OFFENSIVE LAB CLIENT v2.0{RESET}
+CYBERIUM_LOGO = rf"""{CYAN}{BOLD}
+   ██████╗██╗   ██╗██████╗ ███████╗██████╗ ██╗██╗   ██╗███╗   ███╗
+  ██╔════╝╚██╗ ██╔╝██╔══██╗██╔════╝██╔══██╗██║██║   ██║████╗ ████║
+  ██║      ╚████╔╝ ██████╔╝█████╗  ██████╔╝██║██║   ██║██╔████╔██║
+  ██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══██╗██║██║   ██║██║╚██╔╝██║
+  ╚██████╗   ██║   ██████╔╝███████╗██║  ██║██║╚██████╔╝██║ ╚═╝ ██║
+   ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝     ╚═╝{RESET}
+{RED}{BOLD}  [ JOHN BRYCE #1 בטכנולוגיה ]{RESET}  {YELLOW}{BOLD}★ OFFENSIVE WARFARE SUITE v2.0{RESET}
 """
 
+ASCII_BANNER = CYBERIUM_LOGO
+
 THEMES = {
-    "cyberpunk": {
-        "name": "Cyberpunk Neon (Default)",
-        "desc": "High-contrast Cyan, Emerald, and Amber hues",
+    "cyberium": {
+        "name": "Cyberium Official (Default)",
+        "desc": "Official Obsidian Black & Electric Cyan Academy Palette",
         "pair1": "white",    # Text
-        "pair2": "cyan",     # Accent / Header
-        "pair3": "green",    # Solved
-        "pair4": "yellow",   # Active Objective
-        "pair5": "red",      # Locked / Error
-        "pair6": "magenta",  # Badges
-        "pair7": "dim",      # Borders
+        "pair2": "cyan",     # Accent / Electric Blue Logo
+        "pair3": "green",    # Solved Objectives
+        "pair4": "yellow",   # Active Objective / Gold Rank Badge
+        "pair5": "red",      # John Bryce Red / Locked
+        "pair6": "cyan",     # (Cy) Brand Badge
+        "pair7": "dim",      # Subtle Grid Lines
+    },
+    "cyberpunk": {
+        "name": "Cyberpunk Neon",
+        "desc": "High-contrast Cyan, Emerald, and Amber hues",
+        "pair1": "white",
+        "pair2": "cyan",
+        "pair3": "green",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "magenta",
+        "pair7": "dim",
+    },
+    "catppuccin": {
+        "name": "Catppuccin Mocha",
+        "desc": "Comfortable pastel sapphire, peach, and mauve",
+        "pair1": "white",
+        "pair2": "cyan",
+        "pair3": "green",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "magenta",
+        "pair7": "dim",
     },
     "dracula": {
         "name": "Dracula",
@@ -69,17 +95,6 @@ THEMES = {
         "pair2": "blue",
         "pair3": "green",
         "pair4": "cyan",
-        "pair5": "red",
-        "pair6": "magenta",
-        "pair7": "dim",
-    },
-    "catppuccin": {
-        "name": "Catppuccin Mocha",
-        "desc": "Comfortable pastel sapphire, peach, and mauve",
-        "pair1": "white",
-        "pair2": "cyan",
-        "pair3": "green",
-        "pair4": "yellow",
         "pair5": "red",
         "pair6": "magenta",
         "pair7": "dim",
@@ -220,17 +235,17 @@ THEMES = {
 
 
 def header(title, subtitle=None):
-    out = f"\n{RED}{BOLD}CYBERIUM ACADEMY{RESET}"
+    out = f"\n{CYAN}{BOLD}(Cy) C Y B E R I U M{RESET} {RED}{BOLD}[JOHN BRYCE]{RESET}"
     if title:
         out += f" {DIM}│{RESET} {WHITE}{BOLD}{title}{RESET}"
     if subtitle:
         out += f" {DIM}({subtitle}){RESET}"
-    out += f"\n{DIM}{'─' * 72}{RESET}"
+    out += f"\n{DIM}{'─' * 74}{RESET}"
     return out
 
 
 def divider():
-    return f"{DIM}{'─' * 72}{RESET}"
+    return f"{DIM}{'─' * 74}{RESET}"
 
 
 def badge_success(text):
@@ -254,21 +269,21 @@ def progress_bar(current, total, width=20):
         return f"{DIM}[{'.' * width}] 0%{RESET}"
     pct = min(1.0, current / total)
     filled = int(round(width * pct))
-    bar = "=" * filled + "-" * (width - filled)
+    bar = "■" * filled + "□" * (width - filled)
     return f"{CYAN}[{bar}]{RESET} {WHITE}{int(pct * 100)}%{RESET}"
 
 
 def calculate_rank(points):
-    """Calculates student offensive title based on training points."""
+    """Calculates official Cyberium Academy student rank matching web dashboard."""
     if points >= 500:
-        return "LVL 6 ◆ CYBER WARFARE OPERATOR", MAGENTA
-    elif points >= 300:
-        return "LVL 5 ◆ SENIOR THREAT SPECIALIST", CYAN
-    elif points >= 150:
-        return "LVL 4 ◆ EXPLOITATION PRACTITIONER", GREEN
-    elif points >= 50:
-        return "LVL 3 ◆ OFFENSIVE APPRENTICE", YELLOW
+        return "★ MASTER SPECIALIST", MAGENTA
+    elif points >= 250:
+        return "★ SENIOR OPERATOR", CYAN
+    elif points >= 100:
+        return "★ EXPERT", YELLOW
+    elif points >= 40:
+        return "★ PRACTITIONER", GREEN
     elif points >= 10:
-        return "LVL 2 ◆ SECURITY ANALYST", BLUE
+        return "★ APPRENTICE", BLUE
     else:
-        return "LVL 1 ◆ CYBER RECRUIT", WHITE
+        return "★ RECRUIT", WHITE
