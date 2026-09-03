@@ -2,9 +2,9 @@
 Cyberium Academy Interactive Terminal User Interface (TUI)
 Built with Python Standard Library Curses (Zero External Dependencies)
 Features:
+- Live Theme Selector ([t]) for all terminal types (Standard Linux ANSI, Matrix, Catppuccin, Nord, Cyberpunk)
 - Real-time Live Search & Filter (/)
 - Personal Question Scratchpad Notes ([n])
-- Timed Lab Exam & SPS Performance HUD ([e])
 - Official Course Book PDF links ([b])
 - HD Video Lecture Streaming ([v])
 - Core Labs & Bonus Challenges Toggle ([x])
@@ -22,7 +22,7 @@ os.environ.setdefault("ESCDELAY", "25")
 
 from .config import load_config, save_config, get_note, save_note
 from .api import CyberiumClient
-from .ui import calculate_rank
+from .ui import calculate_rank, THEMES
 
 
 def safe_addstr(win, y, x, text, attr=0):
@@ -47,6 +47,10 @@ class CyberiumTUI:
         self.stdscr = stdscr
         self.cfg = load_config()
         self.client = None
+        self.theme_name = self.cfg.get("theme", "cyberpunk")
+        if self.theme_name not in THEMES:
+            self.theme_name = "cyberpunk"
+
         self.module_id = self.cfg.get("current_module_id", 88)
         self.program_id = self.cfg.get("current_program_id", 10)
         self.program_name = "ZX310 Cyber Warfare"
@@ -93,14 +97,64 @@ class CyberiumTUI:
             pass
 
     def init_colors(self):
-        if curses.has_colors():
-            curses.init_pair(1, curses.COLOR_WHITE, -1)     # Plain text
-            curses.init_pair(2, curses.COLOR_CYAN, -1)      # Cyan titles / accents
-            curses.init_pair(3, curses.COLOR_GREEN, -1)     # Green / Solved
-            curses.init_pair(4, curses.COLOR_YELLOW, -1)    # Yellow / Active Pending
-            curses.init_pair(5, curses.COLOR_RED, -1)       # Red / Error / Locked
-            curses.init_pair(6, curses.COLOR_MAGENTA, -1)   # Magenta badges
-            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_BLACK, -1) # Dim / Borders
+        if not curses.has_colors():
+            return
+
+        t_data = THEMES.get(self.theme_name, THEMES["cyberpunk"])
+        t_col = t_data.get("colors", {})
+
+        # Standard palette mapping
+        # 1: Text, 2: Accent, 3: Solved, 4: Active, 5: Locked, 6: Badge, 7: Border
+        if self.theme_name == "matrix":
+            curses.init_pair(1, curses.COLOR_GREEN, -1)
+            curses.init_pair(2, curses.COLOR_GREEN, -1)
+            curses.init_pair(3, curses.COLOR_WHITE, -1)
+            curses.init_pair(4, curses.COLOR_YELLOW, -1)
+            curses.init_pair(5, curses.COLOR_RED, -1)
+            curses.init_pair(6, curses.COLOR_GREEN, -1)
+            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_BLACK, -1)
+        elif self.theme_name == "nord":
+            curses.init_pair(1, curses.COLOR_WHITE, -1)
+            curses.init_pair(2, curses.COLOR_CYAN, -1)
+            curses.init_pair(3, curses.COLOR_GREEN, -1)
+            curses.init_pair(4, curses.COLOR_BLUE, -1)
+            curses.init_pair(5, curses.COLOR_RED, -1)
+            curses.init_pair(6, curses.COLOR_CYAN, -1)
+            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_WHITE, -1)
+        elif self.theme_name == "monokai":
+            curses.init_pair(1, curses.COLOR_WHITE, -1)
+            curses.init_pair(2, curses.COLOR_YELLOW, -1)
+            curses.init_pair(3, curses.COLOR_GREEN, -1)
+            curses.init_pair(4, curses.COLOR_CYAN, -1)
+            curses.init_pair(5, curses.COLOR_RED, -1)
+            curses.init_pair(6, curses.COLOR_MAGENTA, -1)
+            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_BLACK, -1)
+        elif self.theme_name == "classic":
+            # Pure ANSI 8-color fallback for basic terminals
+            curses.init_pair(1, curses.COLOR_WHITE, -1)
+            curses.init_pair(2, curses.COLOR_CYAN, -1)
+            curses.init_pair(3, curses.COLOR_GREEN, -1)
+            curses.init_pair(4, curses.COLOR_YELLOW, -1)
+            curses.init_pair(5, curses.COLOR_RED, -1)
+            curses.init_pair(6, curses.COLOR_WHITE, -1)
+            curses.init_pair(7, curses.COLOR_WHITE, -1)
+        elif self.theme_name == "catppuccin":
+            curses.init_pair(1, curses.COLOR_WHITE, -1)
+            curses.init_pair(2, curses.COLOR_CYAN, -1)
+            curses.init_pair(3, curses.COLOR_GREEN, -1)
+            curses.init_pair(4, curses.COLOR_YELLOW, -1)
+            curses.init_pair(5, curses.COLOR_RED, -1)
+            curses.init_pair(6, curses.COLOR_MAGENTA, -1)
+            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_BLUE, -1)
+        else:
+            # Default Cyberpunk
+            curses.init_pair(1, curses.COLOR_WHITE, -1)
+            curses.init_pair(2, curses.COLOR_CYAN, -1)
+            curses.init_pair(3, curses.COLOR_GREEN, -1)
+            curses.init_pair(4, curses.COLOR_YELLOW, -1)
+            curses.init_pair(5, curses.COLOR_RED, -1)
+            curses.init_pair(6, curses.COLOR_MAGENTA, -1)
+            curses.init_pair(7, 8 if curses.COLORS >= 16 else curses.COLOR_BLACK, -1)
 
     def authenticate(self):
         try:
@@ -144,7 +198,7 @@ class CyberiumTUI:
         # Fetch Questions for Current Module
         data = self.client.get_questions(self.module_id, q_type=self.q_type)
         if "error" in data:
-            self.status_msg = f"Error: {data['error']}"
+            self.status_msg = f"{data['error']}"
             self.status_color = 5
             self.questions = []
             self.filtered_questions = []
@@ -191,7 +245,8 @@ class CyberiumTUI:
 
     def draw_header(self, max_y, max_x):
         rank_title, _ = calculate_rank(self.profile_pts)
-        header_text = f" CYBERIUM │ {self.program_name} › {self.module_name} "
+        type_badge = " [EXTRA]" if self.q_type == "extra" else ""
+        header_text = f" CYBERIUM │ {self.program_name} › {self.module_name}{type_badge} "
         pct = int(self.answered / self.total * 100) if self.total > 0 else (100 if self.module_completed else 0)
         stats_text = f" {self.answered}/{self.total} Solved ({pct}%) │ {self.profile_pts} pts ({rank_title.split('◆')[0].strip()}) "
 
@@ -214,7 +269,7 @@ class CyberiumTUI:
             pass
 
         if self.input_mode:
-            prompt = " ❯ Submit Answer: "
+            prompt = f" ❯ Submit Answer ({self.q_type.upper()}): "
             safe_addstr(self.stdscr, max_y - 1, 1, prompt, curses.color_pair(4) | curses.A_BOLD)
             ans_x = len(prompt) + 1
             safe_addstr(self.stdscr, max_y - 1, ans_x, self.input_text, curses.color_pair(1) | curses.A_BOLD)
@@ -243,9 +298,9 @@ class CyberiumTUI:
                 ("[m]", "Modules"),
                 ("[P]", "Tracks"),
                 ("[x]", "Extra" if self.q_type == "lab" else "Labs"),
+                ("[t]", "Theme"),
                 ("[b]", "Book"),
                 ("[v]", "Video"),
-                ("[e]", "Exam"),
                 ("[p]", "Profile"),
                 ("[q]", "Quit"),
             ]
@@ -271,6 +326,11 @@ class CyberiumTUI:
                 status_text = " [LOCKED BY LECTURER] "
                 safe_addstr(self.stdscr, start_y + 2, 2, status_text, curses.color_pair(5) | curses.A_BOLD)
                 safe_addstr(self.stdscr, start_y + 4, 2, " Press [m] to pick an open module", curses.color_pair(7))
+            elif self.q_type == "extra":
+                status_text = " [EXTRA LABS LOCKED] "
+                safe_addstr(self.stdscr, start_y + 2, 2, status_text, curses.color_pair(5) | curses.A_BOLD)
+                safe_addstr(self.stdscr, start_y + 4, 2, " Requires >= 80% score on Core Labs", curses.color_pair(4))
+                safe_addstr(self.stdscr, start_y + 6, 2, " Press [x] to return to Core Labs", curses.color_pair(2))
             else:
                 status_text = " [NO LABS IN THIS MODULE] "
                 safe_addstr(self.stdscr, start_y + 2, 2, status_text, curses.color_pair(5) | curses.A_BOLD)
@@ -338,6 +398,11 @@ class CyberiumTUI:
                 safe_addstr(self.stdscr, 7, card_x, "• Check back after your next class lesson.", curses.color_pair(7))
                 safe_addstr(self.stdscr, 8, card_x, "• Press [m] to select an open module with active labs.", curses.color_pair(4) | curses.A_BOLD)
                 safe_addstr(self.stdscr, 9, card_x, "• Press [P] to switch to another training track.", curses.color_pair(2) | curses.A_BOLD)
+            elif self.q_type == "extra":
+                safe_addstr(self.stdscr, 3, card_x, "◆ BONUS / EXTRA CHALLENGES LOCKED", curses.color_pair(5) | curses.A_BOLD)
+                safe_addstr(self.stdscr, 5, card_x, "Cyberium requires completing >=80% of Core Labs to unlock bonus tasks.", curses.color_pair(1))
+                safe_addstr(self.stdscr, 7, card_x, "• Complete remaining Core Labs first to earn bonus access.", curses.color_pair(4))
+                safe_addstr(self.stdscr, 8, card_x, "• Press [x] to return to Core Lab Objectives.", curses.color_pair(2) | curses.A_BOLD)
             else:
                 safe_addstr(self.stdscr, 3, card_x, "◆ MODULE STATUS: NO LAB EXERCISES", curses.color_pair(4) | curses.A_BOLD)
                 safe_addstr(self.stdscr, 5, card_x, "This module contains lecture/book material only (0 labs).", curses.color_pair(1))
@@ -363,7 +428,8 @@ class CyberiumTUI:
             status_label = "UPCOMING [ ]"
             status_pair = 7
 
-        title_line = f"◆ QUESTION #{idx_num}  │  {status_label}"
+        mode_prefix = "EXTRA #" if self.q_type == "extra" else "QUESTION #"
+        title_line = f"◆ {mode_prefix}{idx_num}  │  {status_label}"
         safe_addstr(self.stdscr, 2, card_x, title_line, curses.color_pair(status_pair) | curses.A_BOLD)
 
         try:
@@ -472,55 +538,56 @@ class CyberiumTUI:
                 note_buffer = note_buffer[:cursor_pos] + chr(k) + note_buffer[cursor_pos:]
                 cursor_pos += 1
 
-    def show_exam_popup(self, max_y, max_x):
-        """View Timed Lab Exam & SPS Performance metrics."""
-        if not self.client:
-            return
-        mods_data = self.client.get_modules(self.program_id)
-        modules = mods_data.get("modules", [])
-        curr_m = None
-        for m in modules:
-            if m.get("id") == self.module_id:
-                curr_m = m
-                break
-        if not curr_m:
-            return
-
-        name = curr_m.get("name", "")
-        is_unlocked = curr_m.get("lab_test_unlocked", False)
-        is_comp = curr_m.get("lab_test_completed", False)
-        sps = curr_m.get("lab_test_sps")
-        dur = curr_m.get("lab_test_duration_sec", 0)
-
-        pw = min(64, max_x - 4)
-        ph = 11
+    def show_themes_popup(self, max_y, max_x):
+        """Theme selector modal supporting standard ANSI terminals and modern palettes."""
+        theme_keys = list(THEMES.keys())
+        pw = min(72, max_x - 4)
+        ph = min(14, max_y - 4)
         px = (max_x - pw) // 2
         py = (max_y - ph) // 2
 
-        popup = curses.newwin(ph, pw, py, px)
-        popup.keypad(True)
-        popup.box()
+        sel_t = 0
+        for idx, k in enumerate(theme_keys):
+            if k == self.theme_name:
+                sel_t = idx
+                break
 
-        status = "COMPLETED [✓]" if is_comp else ("UNLOCKED []" if is_unlocked else "LOCKED []")
-        status_col = 3 if is_comp else (4 if is_unlocked else 5)
-
-        safe_addstr(popup, 0, 2, " TIMED LAB EXAM / SPS PERFORMANCE ", curses.color_pair(2) | curses.A_BOLD)
-        safe_addstr(popup, 2, 3, f"Module:      {name}", curses.color_pair(1) | curses.A_BOLD)
-        safe_addstr(popup, 3, 3, f"Exam Status: {status}", curses.color_pair(status_col) | curses.A_BOLD)
-
-        if sps is not None:
-            sps_col = 3 if sps >= 80 else (4 if sps >= 60 else 5)
-            safe_addstr(popup, 5, 3, f"SPS Rating:  {sps}% Skills Performance Score", curses.color_pair(sps_col) | curses.A_BOLD)
-        if dur:
-            mins = dur // 60
-            secs = dur % 60
-            safe_addstr(popup, 6, 3, f"Duration:    {mins} minutes, {secs} seconds", curses.color_pair(1))
-
-        safe_addstr(popup, 9, 3, "Press [Esc] or [Enter] to close", curses.color_pair(7))
-        popup.refresh()
         while True:
-            k = popup.getch()
-            if k in (27, 10, 13, ord('q'), ord('Q'), curses.KEY_ENTER):
+            popup = curses.newwin(ph, pw, py, px)
+            popup.keypad(True)
+            popup.box()
+            safe_addstr(popup, 0, 2, " TERMINAL THEMES & COMPATIBILITY ", curses.color_pair(2) | curses.A_BOLD)
+
+            for row, tid in enumerate(theme_keys):
+                info = THEMES[tid]
+                t_name = info.get("name", tid)
+                t_desc = info.get("desc", "")[:28]
+                mark = "●" if tid == self.theme_name else "○"
+
+                line_str = f" {mark} {t_name:<26} │ {t_desc}"
+                if row == sel_t:
+                    safe_addstr(popup, 2 + row, 2, line_str[:pw - 4], curses.color_pair(2) | curses.A_REVERSE | curses.A_BOLD)
+                else:
+                    safe_addstr(popup, 2 + row, 2, line_str[:pw - 4], curses.color_pair(1))
+
+            safe_addstr(popup, ph - 2, 2, "[↑/↓/j/k] Select │ [Enter] Apply Theme │ [Esc] Cancel", curses.color_pair(7))
+            popup.refresh()
+
+            key = popup.getch()
+            if key in (curses.KEY_UP, ord('k')):
+                sel_t = max(0, sel_t - 1)
+            elif key in (curses.KEY_DOWN, ord('j')):
+                sel_t = min(len(theme_keys) - 1, sel_t + 1)
+            elif key in (10, 13, curses.KEY_ENTER):
+                new_theme = theme_keys[sel_t]
+                self.theme_name = new_theme
+                self.cfg["theme"] = new_theme
+                save_config(self.cfg)
+                self.init_colors()
+                self.status_msg = f"Theme applied: {THEMES[new_theme]['name']}"
+                self.status_color = 3
+                break
+            elif key in (27, ord('q'), ord('Q'), ord('t'), ord('T')):
                 break
 
     def show_profile_popup(self, max_y, max_x):
@@ -824,7 +891,7 @@ class CyberiumTUI:
         q = self.filtered_questions[self.selected_idx]
         q_idx = q.get("index", self.selected_idx)
 
-        self.status_msg = f"Submitting answer to #{q_idx}..."
+        self.status_msg = f"Submitting answer to #{q_idx} ({self.q_type.upper()})..."
         self.status_color = 4
         self.render()
 
@@ -967,9 +1034,9 @@ class CyberiumTUI:
                 elif key in (ord('n'), ord('N')):
                     max_y, max_x = self.stdscr.getmaxyx()
                     self.show_note_popup(max_y, max_x)
-                elif key in (ord('e'), ord('E')):
+                elif key in (ord('t'), ord('T')):
                     max_y, max_x = self.stdscr.getmaxyx()
-                    self.show_exam_popup(max_y, max_x)
+                    self.show_themes_popup(max_y, max_x)
                 elif key in (ord('c'), ord('C')):
                     if self.filtered_questions and self.selected_idx < len(self.filtered_questions):
                         q_text = self.filtered_questions[self.selected_idx].get("text", "")
@@ -987,7 +1054,7 @@ class CyberiumTUI:
                     self.show_media_popup(max_y, max_x, "video")
                 elif key in (ord('x'), ord('X')):
                     self.q_type = "extra" if self.q_type == "lab" else "lab"
-                    self.status_msg = f"Switched mode to {'BONUS / EXTRA' if self.q_type == 'extra' else 'CORE LABS'}."
+                    self.status_msg = f"Mode: {'BONUS / EXTRA' if self.q_type == 'extra' else 'CORE LABS'}."
                     self.status_color = 4
                     self.fetch_data()
                 elif key in (ord('m'), ord('M')):
