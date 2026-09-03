@@ -264,25 +264,35 @@ def badge_empty(text):
 
 
 def progress_bar(current, total, width=20):
-    if total <= 0:
-        return f"{DIM}[{'.' * width}] 0%{RESET}"
-    pct = min(1.0, current / total)
-    filled = int(round(width * pct))
-    bar = "■" * filled + "□" * (width - filled)
+    try:
+        cur = max(0, int(current))
+        tot = max(0, int(total))
+        w = max(1, int(width))
+    except (ValueError, TypeError):
+        return f"{DIM}[{'·' * 10}] 0%{RESET}"
+    if tot <= 0:
+        return f"{DIM}[{'·' * w}] 0%{RESET}"
+    pct = max(0.0, min(1.0, cur / tot))
+    filled = max(0, min(w, int(round(w * pct))))
+    bar = "■" * filled + "□" * (w - filled)
     return f"{CYAN}[{bar}]{RESET} {WHITE}{int(pct * 100)}%{RESET}"
 
 
 def calculate_rank(points):
     """Calculates official Cyberium Academy student rank matching web dashboard."""
-    if points >= 500:
+    try:
+        pts = int(points)
+    except (ValueError, TypeError):
+        pts = 0
+    if pts >= 500:
         return "★ MASTER SPECIALIST", MAGENTA
-    elif points >= 250:
+    elif pts >= 250:
         return "★ SENIOR OPERATOR", CYAN
-    elif points >= 100:
+    elif pts >= 100:
         return "★ EXPERT", YELLOW
-    elif points >= 40:
+    elif pts >= 40:
         return "★ PRACTITIONER", GREEN
-    elif points >= 10:
+    elif pts >= 10:
         return "★ APPRENTICE", BLUE
     else:
         return "★ RECRUIT", WHITE

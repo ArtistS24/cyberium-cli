@@ -480,7 +480,7 @@ def cmd_set_theme(cfg, theme_name):
     print(f"{GREEN}[{ICON_CHECK}] Theme set to {BOLD}{THEMES[tname]['name']}{RESET}!\n")
 
 
-def main():
+def _run_cli():
     parser = argparse.ArgumentParser(
         description="Cyberium Academy Official Terminal Client & Submission Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -619,6 +619,17 @@ def main():
         cmd_extra(client, cfg)
     else:
         parser.print_help()
+
+
+def main():
+    try:
+        _run_cli()
+    except KeyboardInterrupt:
+        print(f"\n{DIM}[Operation cancelled by user]{RESET}\n")
+        sys.exit(130)
+    except Exception as e:
+        print(f"\n{RED}[!] Error: {e}{RESET}\n")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
