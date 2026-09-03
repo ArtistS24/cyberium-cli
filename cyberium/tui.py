@@ -840,13 +840,13 @@ class CyberiumTUI:
         popup.box()
 
         if media_type == "book":
-            book_path = curr_m.get("book_url")
-            url = f"https://cyberium.academy/{book_path}" if book_path else None
+            resp = self.client.get_book(self.module_id)
+            url = resp.get("url") if isinstance(resp, dict) else None
             safe_addstr(popup, 0, 2, " OFFICIAL COURSE BOOK (PDF) ", curses.color_pair(2) | curses.A_BOLD)
             safe_addstr(popup, 2, 3, f"Module:   {name}", curses.color_pair(1) | curses.A_BOLD)
             if url:
                 safe_addstr(popup, 4, 3, f"URL: {url[:pw-10]}", curses.color_pair(3))
-                safe_addstr(popup, 6, 3, "[o] Open in Browser/Reader │ [c] Copy Link │ [Esc] Close", curses.color_pair(4) | curses.A_BOLD)
+                safe_addstr(popup, 6, 3, "[o] Open in Browser/Reader │ [c] Copy Direct Link │ [Esc] Close", curses.color_pair(4) | curses.A_BOLD)
             else:
                 safe_addstr(popup, 4, 3, "No PDF book available for this module.", curses.color_pair(5))
                 safe_addstr(popup, 6, 3, "Press [Esc] to close", curses.color_pair(7))
