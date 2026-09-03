@@ -95,3 +95,6 @@ class CyberiumClient:
 
     def get_profile(self):
         return self.request("/api/student/profile/overview")
+
+    def get_book(self, module_id):
+        return self.request(f"/api/student/training/modules/{module_id}/book")
