@@ -1,5 +1,6 @@
 """
 Cyberium Academy API Client
+Robust, Token-Aware HTTP Client with Automatic Refresh and Error Recovery.
 """
 
 import sys
@@ -28,6 +29,10 @@ class CyberiumClient:
             print(f"Run {BOLD}cyberium login{RESET} to authenticate your terminal client.")
             sys.exit(1)
 
+        self.refresh_token(exit_on_failure=True)
+
+    def refresh_token(self, exit_on_failure=False):
+        """Refreshes the JWT accessToken using persistent connect.sid / cyb_rt cookies."""
         refresh_url = f"{BASE_URL}/api/auth/refresh"
         req = urllib.request.Request(
             refresh_url,
@@ -39,22 +44,27 @@ class CyberiumClient:
             }
         )
         try:
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 self.token = data.get("accessToken")
                 self.user = data.get("user")
-                if not self.token:
+                if not self.token and exit_on_failure:
                     print(f"{RED}[!] Auth refresh failed: No accessToken returned.{RESET}")
                     sys.exit(1)
+                return bool(self.token)
         except urllib.error.HTTPError as e:
-            print(f"{RED}[!] Auth failed (HTTP {e.code}): Session cookies may have expired.{RESET}")
-            print(f"Run {BOLD}cyberium login{RESET} to update your cookies.")
-            sys.exit(1)
+            if exit_on_failure:
+                print(f"{RED}[!] Auth failed (HTTP {e.code}): Session cookies may have expired.{RESET}")
+                print(f"Run {BOLD}cyberium login{RESET} to update your cookies.")
+                sys.exit(1)
+            return False
         except Exception as e:
-            print(f"{RED}[!] Network connection error: {e}{RESET}")
-            sys.exit(1)
+            if exit_on_failure:
+                print(f"{RED}[!] Network connection error: {e}{RESET}")
+                sys.exit(1)
+            return False
 
-    def request(self, endpoint, method="GET", body=None):
+    def request(self, endpoint, method="GET", body=None, _retried=False):
         url = f"{BASE_URL}{endpoint}" if not endpoint.startswith("http") else endpoint
         headers = {
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0",
@@ -66,9 +76,14 @@ class CyberiumClient:
         data_bytes = json.dumps(body).encode("utf-8") if body else None
         req = urllib.request.Request(url, data=data_bytes, headers=headers, method=method)
         try:
-            with urllib.request.urlopen(req) as resp:
-                return json.loads(resp.read().decode("utf-8"))
+            with urllib.request.urlopen(req, timeout=12) as resp:
+                raw = resp.read().decode("utf-8")
+                return json.loads(raw) if raw else {}
         except urllib.error.HTTPError as e:
+            if e.code == 401 and not _retried:
+                # Token may have expired during active session -> attempt transparent refresh
+                if self.refresh_token():
+                    return self.request(endpoint, method=method, body=body, _retried=True)
             try:
                 return json.loads(e.read().decode("utf-8"))
             except Exception:
@@ -89,7 +104,7 @@ class CyberiumClient:
         payload = {
             "type": q_type,
             "question_index": question_index,
-            "answer": answer.strip()
+            "answer": str(answer).strip()
         }
         return self.request(f"/api/student/training/modules/{module_id}/answer", method="POST", body=payload)
 
