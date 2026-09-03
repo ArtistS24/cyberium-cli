@@ -29,7 +29,6 @@ ICON_BOOK = "󰂿"
 ICON_VIDEO = "󰕧"
 ICON_THEME = "󰏘"
 ICON_LIVE = "●"
-ICON_CY = "(Cy)"
 
 CYBERIUM_LOGO = rf"""{CYAN}{BOLD}
    ██████╗██╗   ██╗██████╗ ███████╗██████╗ ██╗██╗   ██╗███╗   ███╗
@@ -52,7 +51,7 @@ THEMES = {
         "pair3": "green",    # Solved Objectives
         "pair4": "yellow",   # Active Objective / Gold Rank Badge
         "pair5": "red",      # John Bryce Red / Locked
-        "pair6": "cyan",     # (Cy) Brand Badge
+        "pair6": "cyan",     # Badges
         "pair7": "dim",      # Subtle Grid Lines
     },
     "cyberpunk": {
@@ -235,7 +234,7 @@ THEMES = {
 
 
 def header(title, subtitle=None):
-    out = f"\n{CYAN}{BOLD}(Cy) C Y B E R I U M{RESET} {RED}{BOLD}[JOHN BRYCE]{RESET}"
+    out = f"\n{CYAN}{BOLD}C Y B E R I U M{RESET} {RED}{BOLD}[JOHN BRYCE]{RESET}"
     if title:
         out += f" {DIM}│{RESET} {WHITE}{BOLD}{title}{RESET}"
     if subtitle:
