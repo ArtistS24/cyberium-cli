@@ -1,6 +1,6 @@
 """
 ANSI Styling, ASCII Art Branding, and Nerd Font Terminal Presentation
-Strictly clean terminal glyphs, theme palettes, and high-contrast color formatting.
+Strictly clean terminal glyphs, expanded theme palettes, and high-contrast color formatting.
 """
 
 # ANSI Color Palette
@@ -41,82 +41,180 @@ ASCII_BANNER = rf"""{CYAN}{BOLD}
 
 THEMES = {
     "cyberpunk": {
-        "name": "Cyberpunk / Neon (Default)",
+        "name": "Cyberpunk Neon (Default)",
         "desc": "High-contrast Cyan, Emerald, and Amber hues",
-        "colors": {
-            "text": 1,    # White
-            "accent": 2,  # Cyan
-            "solved": 3,  # Green
-            "active": 4,  # Yellow
-            "locked": 5,  # Red
-            "badge": 6,   # Magenta
-            "border": 7   # Dim / Blue
-        }
+        "pair1": "white",    # Text
+        "pair2": "cyan",     # Accent / Header
+        "pair3": "green",    # Solved
+        "pair4": "yellow",   # Active Objective
+        "pair5": "red",      # Locked / Error
+        "pair6": "magenta",  # Badges
+        "pair7": "dim",      # Borders
+    },
+    "dracula": {
+        "name": "Dracula",
+        "desc": "Vampire purple, neon pink, and cyan highlights",
+        "pair1": "white",
+        "pair2": "magenta",
+        "pair3": "green",
+        "pair4": "cyan",
+        "pair5": "red",
+        "pair6": "yellow",
+        "pair7": "dim",
+    },
+    "tokyo-night": {
+        "name": "Tokyo Night",
+        "desc": "Midnight blue streets with vibrant neon magenta & cyan",
+        "pair1": "white",
+        "pair2": "blue",
+        "pair3": "green",
+        "pair4": "cyan",
+        "pair5": "red",
+        "pair6": "magenta",
+        "pair7": "dim",
     },
     "catppuccin": {
         "name": "Catppuccin Mocha",
         "desc": "Comfortable pastel sapphire, peach, and mauve",
-        "colors": {
-            "text": 1,
-            "accent": 2,
-            "solved": 3,
-            "active": 4,
-            "locked": 5,
-            "badge": 6,
-            "border": 7
-        }
+        "pair1": "white",
+        "pair2": "cyan",
+        "pair3": "green",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "magenta",
+        "pair7": "dim",
     },
-    "matrix": {
-        "name": "Matrix Hacker",
-        "desc": "Monochromatic hacker aesthetic with bright green glow",
-        "colors": {
-            "text": 3,    # Green text
-            "accent": 3,  # Green accent
-            "solved": 1,  # White solved
-            "active": 4,  # Yellow active
-            "locked": 5,  # Red locked
-            "badge": 3,   # Green badge
-            "border": 7   # Dim border
-        }
+    "gruvbox": {
+        "name": "Gruvbox Dark",
+        "desc": "Warm retro groove with earthy orange, yellow & green",
+        "pair1": "white",
+        "pair2": "yellow",
+        "pair3": "green",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "magenta",
+        "pair7": "dim",
+    },
+    "everforest": {
+        "name": "Everforest",
+        "desc": "Soft forest pine, serene sage green, and warm earth",
+        "pair1": "white",
+        "pair2": "green",
+        "pair3": "green",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "cyan",
+        "pair7": "dim",
+    },
+    "rose-pine": {
+        "name": "Rosé Pine",
+        "desc": "All natural pine, rosé blush, and golden glow",
+        "pair1": "white",
+        "pair2": "magenta",
+        "pair3": "green",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "cyan",
+        "pair7": "dim",
+    },
+    "kanagawa": {
+        "name": "Kanagawa",
+        "desc": "Wave blue ocean, autumn leaf orange, and fuji white",
+        "pair1": "white",
+        "pair2": "cyan",
+        "pair3": "green",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "blue",
+        "pair7": "dim",
     },
     "nord": {
         "name": "Nordic Frost",
         "desc": "Arctic blue, cool cyan, and frosty white tones",
-        "colors": {
-            "text": 1,
-            "accent": 2,
-            "solved": 3,
-            "active": 2,
-            "locked": 5,
-            "badge": 2,
-            "border": 1
-        }
+        "pair1": "white",
+        "pair2": "cyan",
+        "pair3": "green",
+        "pair4": "blue",
+        "pair5": "red",
+        "pair6": "cyan",
+        "pair7": "white",
+    },
+    "matrix": {
+        "name": "Matrix Hacker",
+        "desc": "Monochromatic hacker CRT with glowing digital green",
+        "pair1": "green",
+        "pair2": "green",
+        "pair3": "white",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "green",
+        "pair7": "dim",
+    },
+    "synthwave84": {
+        "name": "Synthwave '84",
+        "desc": "80s retrowave sunset magenta, hot pink & neon cyan",
+        "pair1": "white",
+        "pair2": "magenta",
+        "pair3": "cyan",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "magenta",
+        "pair7": "dim",
     },
     "monokai": {
         "name": "Monokai Pro",
         "desc": "Vibrant sunshine yellow, emerald, and hot pink",
-        "colors": {
-            "text": 1,
-            "accent": 4,  # Yellow
-            "solved": 3,  # Green
-            "active": 2,  # Cyan
-            "locked": 5,  # Red
-            "badge": 6,   # Magenta
-            "border": 7
-        }
+        "pair1": "white",
+        "pair2": "yellow",
+        "pair3": "green",
+        "pair4": "cyan",
+        "pair5": "red",
+        "pair6": "magenta",
+        "pair7": "dim",
+    },
+    "oxocarbon": {
+        "name": "Oxocarbon",
+        "desc": "Minimalist high-tech carbon with crisp neon accents",
+        "pair1": "white",
+        "pair2": "cyan",
+        "pair3": "green",
+        "pair4": "magenta",
+        "pair5": "red",
+        "pair6": "white",
+        "pair7": "dim",
+    },
+    "retro-fallout": {
+        "name": "Fallout Pip-Boy",
+        "desc": "Post-apocalyptic phosphor amber & green terminal",
+        "pair1": "yellow",
+        "pair2": "yellow",
+        "pair3": "green",
+        "pair4": "white",
+        "pair5": "red",
+        "pair6": "yellow",
+        "pair7": "dim",
+    },
+    "solarized": {
+        "name": "Solarized Dark",
+        "desc": "Precision solarized cyan, blue, and golden yellow",
+        "pair1": "white",
+        "pair2": "blue",
+        "pair3": "green",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "cyan",
+        "pair7": "dim",
     },
     "classic": {
         "name": "Standard Linux ANSI",
         "desc": "Pure standard 8-color fallback for standard Linux/TTY terminals",
-        "colors": {
-            "text": 1,
-            "accent": 2,
-            "solved": 3,
-            "active": 4,
-            "locked": 5,
-            "badge": 1,
-            "border": 1
-        }
+        "pair1": "white",
+        "pair2": "cyan",
+        "pair3": "green",
+        "pair4": "yellow",
+        "pair5": "red",
+        "pair6": "white",
+        "pair7": "white",
     }
 }
 
