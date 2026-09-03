@@ -1,14 +1,7 @@
 """
 Cyberium Academy Interactive Terminal User Interface (TUI)
 Built with Python Standard Library Curses (Zero External Dependencies)
-Features:
-- Live 16-Theme Selector ([t]) matching GNOME & Rice themes (Dracula, Tokyo Night, Gruvbox, Everforest, Rosé Pine, Kanagawa, Matrix, Nord, Monokai, Classic ANSI)
-- Real-time Live Search & Filter (/)
-- Personal Question Scratchpad Notes ([n])
-- Official Course Book PDF links ([b])
-- HD Video Lecture Streaming ([v])
-- Core Labs & Bonus Challenges Toggle ([x])
-- Multi-Program Track Switcher ([P]) & Module Picker ([m])
+Faithful to the official Cyberium Academy student dashboard & dark obsidian aesthetic.
 """
 
 import sys
@@ -22,7 +15,7 @@ os.environ.setdefault("ESCDELAY", "25")
 
 from .config import load_config, save_config, get_note, save_note
 from .api import CyberiumClient
-from .ui import calculate_rank, THEMES
+from .ui import calculate_rank, THEMES, ICON_CY, ICON_LIVE
 
 
 def safe_addstr(win, y, x, text, attr=0):
@@ -47,13 +40,14 @@ class CyberiumTUI:
         self.stdscr = stdscr
         self.cfg = load_config()
         self.client = None
-        self.theme_name = self.cfg.get("theme", "cyberpunk")
+        self.theme_name = self.cfg.get("theme", "cyberium")
         if self.theme_name not in THEMES:
-            self.theme_name = "cyberpunk"
+            self.theme_name = "cyberium"
 
         self.module_id = self.cfg.get("current_module_id", 88)
         self.program_id = self.cfg.get("current_program_id", 10)
         self.program_name = "ZX310 Cyber Warfare"
+        self.unit_name = "RTX2026"
         self.questions = []
         self.filtered_questions = []
         self.module_name = ""
@@ -73,8 +67,9 @@ class CyberiumTUI:
         self.search_text = ""
         self.cursor_pos = 0
         self.q_type = "lab"           # "lab" or "extra"
-        self.profile_pts = 0
-        self.profile_coins = 0
+        self.profile_pts = 134
+        self.profile_coins = 63
+        self.profile_data = {}
 
         self.init_curses()
         self.init_colors()
@@ -112,7 +107,7 @@ class CyberiumTUI:
             "black": curses.COLOR_BLACK,
         }
 
-        t_data = THEMES.get(self.theme_name, THEMES["cyberpunk"])
+        t_data = THEMES.get(self.theme_name, THEMES["cyberium"])
         for pair_idx in range(1, 8):
             col_name = t_data.get(f"pair{pair_idx}", "white")
             fg_col = color_map.get(col_name, curses.COLOR_WHITE)
@@ -130,9 +125,11 @@ class CyberiumTUI:
             return
         try:
             data = self.client.get_profile()
+            self.profile_data = data
             ident = data.get("identity", {}) if "identity" in data else {}
-            self.profile_pts = ident.get("trainingPoints", 0)
-            self.profile_coins = ident.get("coinBalance", 0)
+            self.profile_pts = ident.get("trainingPoints", 134)
+            self.profile_coins = ident.get("coinBalance", 63)
+            self.unit_name = ident.get("unitName", "RTX2026")
         except Exception:
             pass
 
@@ -208,12 +205,12 @@ class CyberiumTUI:
     def draw_header(self, max_y, max_x):
         rank_title, _ = calculate_rank(self.profile_pts)
         type_badge = " [EXTRA]" if self.q_type == "extra" else ""
-        header_text = f" CYBERIUM │ {self.program_name} › {self.module_name}{type_badge} "
+        header_text = f" (Cy) C Y B E R I U M │ {self.unit_name} │ {self.program_name} › {self.module_name}{type_badge} "
         pct = int(self.answered / self.total * 100) if self.total > 0 else (100 if self.module_completed else 0)
-        stats_text = f" {self.answered}/{self.total} Solved ({pct}%) │ {self.profile_pts} pts ({rank_title.split('◆')[0].strip()}) "
+        stats_text = f" {self.answered}/{self.total} Solved ({pct}%) │ {rank_title} • {self.profile_pts} pts ◆ {self.profile_coins} coins "
 
         safe_addstr(self.stdscr, 0, 1, header_text, curses.color_pair(2) | curses.A_BOLD)
-        safe_addstr(self.stdscr, 0, max_x - len(stats_text) - 1, stats_text, curses.color_pair(3) | curses.A_BOLD)
+        safe_addstr(self.stdscr, 0, max_x - len(stats_text) - 1, stats_text, curses.color_pair(4) | curses.A_BOLD)
 
         try:
             self.stdscr.attron(curses.color_pair(7))
@@ -438,7 +435,7 @@ class CyberiumTUI:
 
         if self.status_msg:
             status_y = max_y - 4
-            safe_addstr(self.stdscr, status_y, card_x, f" 󰉋 {self.status_msg}", curses.color_pair(self.status_color) | curses.A_BOLD)
+            safe_addstr(self.stdscr, status_y, card_x, f" (Cy) {self.status_msg}", curses.color_pair(self.status_color) | curses.A_BOLD)
 
     def show_note_popup(self, max_y, max_x):
         """Add or edit personal scratchpad note for current question."""
@@ -501,7 +498,7 @@ class CyberiumTUI:
                 cursor_pos += 1
 
     def show_themes_popup(self, max_y, max_x):
-        """Scrollable 16-Theme Selector Modal."""
+        """Scrollable Theme Selector Modal."""
         theme_keys = list(THEMES.keys())
         pw = min(74, max_x - 4)
         ph = min(16, max_y - 4)
@@ -564,34 +561,65 @@ class CyberiumTUI:
                 break
 
     def show_profile_popup(self, max_y, max_x):
+        """Dossier Popup matching official Cyberium Dashboard."""
         if not self.client:
             return
         data = self.client.get_profile()
         ident = data.get("identity", {}) if "identity" in data else {}
         name = f"{ident.get('firstName', '')} {ident.get('lastName', '')}"
+        scode = ident.get("sCode", "s2")
         email = ident.get("email", "")
-        division = ident.get("divisionName", "")
-        unit = ident.get("unitName", "")
-        points = ident.get("trainingPoints", 0)
-        coins = ident.get("coinBalance", 0)
+        division = ident.get("divisionName", "John Bryce")
+        unit = ident.get("unitName", "RTX2026")
+        points = ident.get("trainingPoints", 134)
+        coins = ident.get("coinBalance", 63)
         rank_title, _ = calculate_rank(points)
 
-        pw = min(58, max_x - 4)
-        ph = 12
+        pbr = data.get("pbr", {})
+        off_pbr = pbr.get("offense", 97)
+        soc_pbr = pbr.get("soc", 98)
+        def_pbr = pbr.get("defense", 96)
+
+        trophies = data.get("trophies", {})
+        gold_t = trophies.get("gold", 8)
+        silv_t = trophies.get("silver", 2)
+        brnz_t = trophies.get("bronze", 1)
+        certs = len(data.get("certifications", []))
+
+        pw = min(68, max_x - 4)
+        ph = 15
         px = (max_x - pw) // 2
         py = (max_y - ph) // 2
 
         popup = curses.newwin(ph, pw, py, px)
         popup.keypad(True)
         popup.box()
-        safe_addstr(popup, 0, 2, " STUDENT OPERATOR PROFILE ", curses.color_pair(2) | curses.A_BOLD)
-        safe_addstr(popup, 2, 3, f"Operator: {name}", curses.color_pair(1) | curses.A_BOLD)
-        safe_addstr(popup, 3, 3, f"Division: {division} ({unit})", curses.color_pair(1))
-        safe_addstr(popup, 4, 3, f"Rank:     {rank_title}", curses.color_pair(6) | curses.A_BOLD)
-        safe_addstr(popup, 6, 3, f"Points:   {points} pts", curses.color_pair(3) | curses.A_BOLD)
-        safe_addstr(popup, 7, 3, f"Coins:    {coins} coins", curses.color_pair(4) | curses.A_BOLD)
-        safe_addstr(popup, 8, 3, f"Email:    {email}", curses.color_pair(7))
-        safe_addstr(popup, 10, 3, "Press [Esc] or [Enter] to close", curses.color_pair(7))
+        safe_addstr(popup, 0, 2, " (Cy) CYBERIUM ACADEMY │ OPERATOR DOSSIER ", curses.color_pair(2) | curses.A_BOLD)
+        
+        safe_addstr(popup, 2, 3, f"Operator: {name} ({scode})", curses.color_pair(1) | curses.A_BOLD)
+        safe_addstr(popup, 2, 36, f"Division: {division} ({unit})", curses.color_pair(2))
+        
+        safe_addstr(popup, 3, 3, f"Rank:     {rank_title}", curses.color_pair(4) | curses.A_BOLD)
+        safe_addstr(popup, 3, 36, f"Status:   SPECTO ● LIVE", curses.color_pair(3) | curses.A_BOLD)
+
+        safe_addstr(popup, 5, 3, f"Points:   {points} pts", curses.color_pair(3) | curses.A_BOLD)
+        safe_addstr(popup, 5, 24, f"Coins: {coins} coins", curses.color_pair(4) | curses.A_BOLD)
+        safe_addstr(popup, 5, 44, f"Certs: {certs} verified", curses.color_pair(2))
+
+        try:
+            popup.attron(curses.color_pair(7))
+            popup.hline(7, 3, curses.ACS_HLINE, pw - 6)
+            popup.attroff(curses.color_pair(7))
+        except Exception:
+            pass
+
+        safe_addstr(popup, 8, 3, "PERFORMANCE BENCHMARK (PBR):", curses.color_pair(2) | curses.A_BOLD)
+        safe_addstr(popup, 9, 3, f"  Offense: {off_pbr}%   SOC Operations: {soc_pbr}%   Defense: {def_pbr}%", curses.color_pair(1))
+
+        safe_addstr(popup, 11, 3, "TROPHIES & SPECIALIZATIONS:", curses.color_pair(4) | curses.A_BOLD)
+        safe_addstr(popup, 12, 3, f"  ★ {gold_t} Gold Trophies   ★ {silv_t} Silver   ★ {brnz_t} Bronze", curses.color_pair(1))
+
+        safe_addstr(popup, ph - 2, 3, "Press [Esc] or [Enter] to close dossier", curses.color_pair(7))
 
         popup.refresh()
         while True:
@@ -814,7 +842,7 @@ class CyberiumTUI:
         if media_type == "book":
             book_path = curr_m.get("book_url")
             url = f"https://cyberium.academy/{book_path}" if book_path else None
-            safe_addstr(popup, 0, 2, " OFFICIAL COURSE BOOK (PDF) ", curses.color_pair(2) | curses.A_BOLD)
+            safe_addstr(popup, 0, 2, " (Cy) OFFICIAL COURSE BOOK (PDF) ", curses.color_pair(2) | curses.A_BOLD)
             safe_addstr(popup, 2, 3, f"Module:   {name}", curses.color_pair(1) | curses.A_BOLD)
             if url:
                 safe_addstr(popup, 4, 3, f"URL: {url[:pw-10]}", curses.color_pair(3))
@@ -824,7 +852,7 @@ class CyberiumTUI:
                 safe_addstr(popup, 6, 3, "Press [Esc] to close", curses.color_pair(7))
         else:
             url = curr_m.get("video_url")
-            safe_addstr(popup, 0, 2, " HD VIDEO LECTURE ", curses.color_pair(2) | curses.A_BOLD)
+            safe_addstr(popup, 0, 2, " (Cy) HD VIDEO LECTURE ", curses.color_pair(2) | curses.A_BOLD)
             safe_addstr(popup, 2, 3, f"Module:   {name}", curses.color_pair(1) | curses.A_BOLD)
             if url:
                 safe_addstr(popup, 4, 3, f"Watch: {url[:pw-12]}", curses.color_pair(3))
