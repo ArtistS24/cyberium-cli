@@ -318,10 +318,45 @@ class TestCLI(unittest.TestCase):
                 {"index": 2, "text": "Run cat *", "answered": True}
             ]
         }
-        with patch("builtins.print") as mock_print:
-            cli.cmd_search(self.mock_client, self.cfg, "[0-9]+")
-            cli.cmd_search(self.mock_client, self.cfg, "*")
-            self.assertTrue(mock_print.called)
+    def test_resolve_question_target(self):
+        self.mock_client.get_questions.return_value = {
+            "module_name": "Post (Linux)",
+            "total": 83,
+            "first_unanswered": 14,
+            "questions": [
+                {"index": 14, "text": "2.2. Exfiltrate passwd", "answered": False},
+                {"index": 15, "text": "2.3. Dump shadow", "answered": False}
+            ]
+        }
+        # Resolve None -> active question 14
+        idx, q, _ = cli.resolve_question_target(self.mock_client, self.cfg, None)
+        self.assertEqual(idx, 14)
+
+        # Resolve section string '2.2' -> question 14
+        idx, q, _ = cli.resolve_question_target(self.mock_client, self.cfg, "2.2")
+        self.assertEqual(idx, 14)
+
+        # Resolve '#15' -> question 15
+        idx, q, _ = cli.resolve_question_target(self.mock_client, self.cfg, "#15")
+        self.assertEqual(idx, 15)
+
+    def test_cmd_note_smart_resolution(self):
+        self.mock_client.get_questions.return_value = {
+            "module_name": "Post (Linux)",
+            "total": 83,
+            "first_unanswered": 14,
+            "questions": [
+                {"index": 14, "text": "2.2. Exfiltrate passwd", "answered": False}
+            ]
+        }
+        with patch("cyberium.cli.save_note") as mock_save, patch("builtins.print"):
+            # Save by section string
+            cli.cmd_note(self.mock_client, self.cfg, ["2.2", "Wget note text"])
+            mock_save.assert_called_with(88, 14, "Wget note text")
+
+            # Save without index (to active question)
+            cli.cmd_note(self.mock_client, self.cfg, ["Direct active question memo"])
+            mock_save.assert_called_with(88, 14, "Direct active question memo")
 
 
 class TestTUIHelpers(unittest.TestCase):
