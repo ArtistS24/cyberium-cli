@@ -1,16 +1,18 @@
 """
 Cyberium CLI Command Implementations
 Strict Nerd Font / Terminal Formatting
+Equal capabilities with TUI: Multi-Program tracks, Extra Labs, Notes, Search, Themes.
 """
 
 import sys
 import argparse
-from .config import load_config, save_config, interactive_login
+from .config import load_config, save_config, interactive_login, get_note, save_note
 from .api import CyberiumClient
 from .ui import (
     RED, GREEN, YELLOW, CYAN, WHITE, DIM, BOLD, RESET,
-    ICON_CHECK, ICON_CROSS, ICON_PENDING, ICON_ARROW, ICON_POINTER, ICON_USER, ICON_FOLDER, ICON_POINT,
-    header, divider, badge_success, badge_pending, badge_failed, badge_empty, progress_bar
+    ICON_CHECK, ICON_CROSS, ICON_PENDING, ICON_ARROW, ICON_POINTER, ICON_USER, ICON_FOLDER, ICON_POINT, ICON_THEME,
+    header, divider, badge_success, badge_pending, badge_failed, badge_empty, progress_bar,
+    calculate_rank, THEMES, ASCII_BANNER
 )
 
 
@@ -25,103 +27,108 @@ def ensure_client(cfg):
             success = interactive_login(cfg)
             if not success:
                 sys.exit(1)
-            cfg = load_config()
         else:
-            print(f"\n{DIM}You can set up your session anytime with:{RESET} {CYAN}cyberium login{RESET}")
-            print(f"{DIM}Or by creating a {BOLD}.env{RESET}{DIM} file (see .env.example).{RESET}\n")
-            sys.exit(0)
-
+            sys.exit(1)
     return CyberiumClient(cfg)
 
 
 def cmd_current(client, cfg):
-    module_id = cfg.get("current_module_id", 88)
-    q_data = client.get_questions(module_id)
-    if "error" in q_data:
-        print(f"{RED}[{ICON_CROSS}] Error: {q_data['error']}{RESET}")
+    mod_id = cfg.get("current_module_id", 88)
+    data = client.get_questions(mod_id)
+    if "error" in data:
+        print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
         return
 
-    mod_name = q_data.get("module_name", f"Module #{module_id}")
-    total = q_data.get("total", 0)
-    answered = q_data.get("answered_count", 0)
-    first_unanswered = q_data.get("first_unanswered")
-    questions = q_data.get("questions", [])
+    mod_name = data.get("module_name", f"Module #{mod_id}")
+    total = data.get("total", 0)
+    answered = data.get("answered_count", 0)
+    first_unanswered = data.get("first_unanswered")
+    questions = data.get("questions", [])
 
-    progress_str = f"Lab: {answered}/{total} ({progress_bar(answered, total, width=12)})"
-    print(header(mod_name, progress_str))
+    print(header(mod_name, f"Progress: {answered}/{total}"))
+    print(f"  {BOLD}Completion:{RESET} {progress_bar(answered, total, width=28)}\n")
 
-    if first_unanswered is None or first_unanswered >= len(questions):
-        print(f"{GREEN}{BOLD}[{ICON_CHECK}] All {total} questions in this module are completed!{RESET}\n")
+    if not questions:
+        print(f"  {YELLOW}[!] No lab questions in this module or module is locked.{RESET}\n")
         return
 
-    curr_q = questions[first_unanswered]
-    q_text = curr_q.get("text", "")
-    q_idx = curr_q.get("index", first_unanswered)
-
-    print(f"{YELLOW}{BOLD}[{ICON_PENDING}] CURRENT OBJECTIVE (Index {q_idx}):{RESET}")
-    print(f"  {WHITE}{BOLD}{q_text}{RESET}\n")
-    print(f"{DIM}To submit your answer:{RESET}")
-    print(f"  {CYAN}cyberium submit \"<your_answer>\"{RESET}\n")
-
-
-def cmd_list(client, cfg):
-    module_id = cfg.get("current_module_id", 88)
-    q_data = client.get_questions(module_id)
-    if "error" in q_data:
-        print(f"{RED}[{ICON_CROSS}] Error: {q_data['error']}{RESET}")
-        return
-
-    mod_name = q_data.get("module_name", f"Module #{module_id}")
-    total = q_data.get("total", 0)
-    answered = q_data.get("answered_count", 0)
-    first_unanswered = q_data.get("first_unanswered")
-    questions = q_data.get("questions", [])
-
-    print(header(mod_name, f"{answered}/{total} Solved"))
-
-    for q in questions:
-        idx = q.get("index", 0)
-        is_ans = q.get("answered", False)
+    if first_unanswered is not None and first_unanswered < len(questions):
+        q = questions[first_unanswered]
+        idx = q.get("index", first_unanswered)
         text = q.get("text", "")
-        if len(text) > 75:
-            text = text[:72] + "..."
+        note = get_note(mod_id, idx)
 
-        if is_ans:
-            print(f"  {badge_success(f'#{idx:<2}')} {DIM}{text}{RESET}")
-        elif idx == first_unanswered:
-            print(f"  {badge_pending(f'#{idx:<2}')} {WHITE}{text}{RESET}")
+        print(f"  {YELLOW}{BOLD}[{ICON_PENDING}] CURRENT ACTIVE OBJECTIVE (#{idx}):{RESET}")
+        print(f"  {WHITE}{BOLD}{text}{RESET}\n")
+        if note:
+            print(f"  {CYAN}{BOLD}󰉋 Personal Note:{RESET} {CYAN}{note}{RESET}\n")
+        print(f"{DIM}To submit your answer:{RESET} {CYAN}cyberium submit \"<your command or flag>\"{RESET}\n")
+    else:
+        print(f"  {GREEN}{BOLD}[{ICON_CHECK}] All {total} lab questions in this module are COMPLETED!{RESET}\n")
+
+
+def cmd_list(client, cfg, q_type="lab"):
+    mod_id = cfg.get("current_module_id", 88)
+    data = client.get_questions(mod_id, q_type=q_type)
+    if "error" in data:
+        print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
+        return
+
+    mod_name = data.get("module_name", f"Module #{mod_id}")
+    questions = data.get("questions", [])
+    total = data.get("total", 0)
+    answered = data.get("answered_count", 0)
+    first_unanswered = data.get("first_unanswered")
+    type_label = "EXTRA CHALLENGES" if q_type == "extra" else "LAB OBJECTIVES"
+
+    print(header(f"{mod_name} │ {type_label}", f"{answered}/{total} Solved"))
+
+    if not questions:
+        print(f"  {DIM}[!] No {q_type} questions found for this module.{RESET}\n")
+        return
+
+    for idx, q in enumerate(questions):
+        q_idx = q.get("index", idx)
+        text = q.get("text", "").replace("\n", " ")
+        is_answered = q.get("answered", False)
+        is_active = (idx == first_unanswered)
+        note = get_note(mod_id, q_idx)
+        note_badge = f" {CYAN}󰉋{RESET}" if note else ""
+
+        if is_answered:
+            badge = f"{GREEN}[{ICON_CHECK}]{RESET}"
+            line = f" {badge} {DIM}#{q_idx:<2}{note_badge} {text}{RESET}"
+        elif is_active:
+            badge = f"{YELLOW}{BOLD}[{ICON_PENDING}]{RESET}"
+            line = f" {badge} {YELLOW}{BOLD}#{q_idx:<2}{note_badge} {text}{RESET}"
         else:
-            print(f"  {badge_empty(f'#{idx:<2}')} {DIM}{text}{RESET}")
+            badge = f"{DIM}[ ]{RESET}"
+            line = f" {badge} {WHITE}#{q_idx:<2}{note_badge} {text}{RESET}"
 
-    print(f"{divider()}\n")
+        print(line)
+
+    print(divider() + "\n")
 
 
-def cmd_submit(client, cfg, answer_str):
-    module_id = cfg.get("current_module_id", 88)
-    q_data = client.get_questions(module_id)
-    if "error" in q_data:
-        print(f"{RED}[{ICON_CROSS}] Error: {q_data['error']}{RESET}")
-        return
+def cmd_submit(client, cfg, answer_str, q_index=None, q_type="lab"):
+    mod_id = cfg.get("current_module_id", 88)
 
-    first_unanswered = q_data.get("first_unanswered")
-    questions = q_data.get("questions", [])
+    if q_index is None:
+        data = client.get_questions(mod_id, q_type=q_type)
+        if "error" in data:
+            print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
+            return
+        q_index = data.get("first_unanswered")
+        if q_index is None:
+            print(f"{GREEN}[{ICON_CHECK}] All questions in this module are already solved!{RESET}")
+            return
 
-    if first_unanswered is None or first_unanswered >= len(questions):
-        print(f"{GREEN}[{ICON_CHECK}] All questions in this module are already completed!{RESET}")
-        return
-
-    curr_q = questions[first_unanswered]
-    q_idx = curr_q.get("index", first_unanswered)
-    q_text = curr_q.get("text", "")
-
-    print(f"\n{DIM}[*] Question #{q_idx}:{RESET} {WHITE}{q_text}{RESET}")
-    print(f"{DIM}[*] Submitting answer:{RESET} {CYAN}{BOLD}{answer_str}{RESET}")
-
-    resp = client.submit_answer(module_id, q_idx, answer_str)
+    print(f"\n{CYAN}Submitting answer to Question #{q_index} ({q_type.upper()})...{RESET}")
+    resp = client.submit_answer(mod_id, q_index, answer_str, q_type=q_type)
 
     if resp.get("correct"):
-        print(f"{GREEN}{BOLD}[{ICON_CHECK}] CORRECT! Points awarded.{RESET}")
-        next_data = client.get_questions(module_id)
+        print(f"{GREEN}{BOLD}[{ICON_CHECK}] CORRECT! Objective #{q_index} solved successfully!{RESET}")
+        next_data = client.get_questions(mod_id, q_type=q_type)
         next_idx = next_data.get("first_unanswered")
         if next_idx is not None and next_idx < len(next_data.get("questions", [])):
             nxt_q = next_data["questions"][next_idx]
@@ -179,32 +186,73 @@ def cmd_set_module(cfg, mod_id):
 
 
 def cmd_programs(client, cfg):
-    programs = client.get_programs()
-    if isinstance(programs, dict) and "error" in programs:
-        print(f"{RED}[{ICON_CROSS}] Error: {programs['error']}{RESET}")
+    data = client.get_programs()
+    if "error" in data:
+        print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
         return
 
-    curr_prog = cfg.get("current_program_id")
-    print(header("ENROLLED PROGRAMS"))
+    programs = data if isinstance(data, list) else data.get("programs", [])
+    curr_prog = cfg.get("current_program_id", 10)
+
+    print(header("ENROLLED TRAINING PROGRAMS"))
 
     for p in programs:
         pid = p.get("id")
         code = p.get("code", "")
         name = p.get("name", "")
-        done_mods = p.get("completed_modules", 0)
-        tot_mods = p.get("total_modules", 0)
-        active_mark = f"{YELLOW}{ICON_POINTER}{RESET}" if pid == curr_prog else " "
+        lvl = p.get("level", 1)
+        tot = p.get("total_modules", "0")
+        comp = p.get("completed_modules", "0")
+        pct = p.get("completion_pct", 0)
+        active_mark = f"{CYAN}{BOLD}❯{RESET}" if pid == curr_prog else " "
 
-        print(f" {active_mark} {BOLD}{code:<8}{RESET} {WHITE}{name:<28}{RESET} {DIM}ID: {pid:<2}│ Modules: {done_mods}/{tot_mods}{RESET}")
+        p_bar = progress_bar(int(comp), int(tot) if int(tot) > 0 else 1, width=12)
+        print(f" {active_mark} {BOLD}{code:<6}{RESET} {WHITE}{name:<28}{RESET} {p_bar} {DIM}(Lvl {lvl}) [ID: {pid}]{RESET}")
 
     print(divider())
-    print(f"{DIM}To switch program:{RESET} {CYAN}cyberium set-program <ID>{RESET}\n")
+    print(f"{DIM}To switch program:{RESET} {CYAN}cyberium set-program <ID or CODE>{RESET}\n")
 
 
-def cmd_set_program(cfg, prog_id):
-    cfg["current_program_id"] = int(prog_id)
-    save_config(cfg)
-    print(f"{GREEN}[{ICON_CHECK}] Active program set to ID {prog_id}.{RESET}")
+def cmd_set_program(client, cfg, prog_identifier):
+    data = client.get_programs()
+    programs = data if isinstance(data, list) else data.get("programs", [])
+    
+    target_prog = None
+    # Check if user passed integer ID or string Code (e.g. 10 or ZX310)
+    for p in programs:
+        if str(p.get("id")) == str(prog_identifier) or p.get("code", "").lower() == str(prog_identifier).lower():
+            target_prog = p
+            break
+
+    if not target_prog:
+        print(f"{RED}[!] Program '{prog_identifier}' not found in your enrolled tracks.{RESET}")
+        return
+
+    pid = target_prog.get("id")
+    code = target_prog.get("code", "")
+    name = target_prog.get("name", "")
+
+    cfg["current_program_id"] = pid
+
+    # Automatically pick first open and uncompleted module of this track
+    mods_data = client.get_modules(pid)
+    mods = mods_data.get("modules", [])
+    chosen_mod = None
+    for m in mods:
+        if m.get("is_open") and not m.get("lab_completed"):
+            chosen_mod = m
+            break
+    if not chosen_mod and mods:
+        chosen_mod = mods[0]
+
+    if chosen_mod:
+        cfg["current_module_id"] = chosen_mod.get("id")
+        save_config(cfg)
+        print(f"{GREEN}[{ICON_CHECK}] Switched to Program {BOLD}{code} {name}{RESET} (ID: {pid})")
+        print(f"  {CYAN}Active Module:{RESET} {chosen_mod.get('name')} (ID: {chosen_mod.get('id')})\n")
+    else:
+        save_config(cfg)
+        print(f"{GREEN}[{ICON_CHECK}] Switched to Program {BOLD}{code} {name}{RESET} (ID: {pid})\n")
 
 
 def cmd_profile(client):
@@ -220,18 +268,26 @@ def cmd_profile(client):
     unit = ident.get("unitName", "")
     points = ident.get("trainingPoints", 0)
     coins = ident.get("coinBalance", 0)
+    rank_title, rank_color = calculate_rank(points)
 
     print(header("STUDENT PROFILE"))
-    print(f"  {BOLD}Name:{RESET}     {WHITE}{name}{RESET}")
-    print(f"  {BOLD}Email:{RESET}    {DIM}{email}{RESET}")
+    print(f"  {BOLD}Operator:{RESET} {WHITE}{name}{RESET}")
     print(f"  {BOLD}Division:{RESET} {CYAN}{division}{RESET} {DIM}({unit}){RESET}")
+    print(f"  {BOLD}Rank:{RESET}     {rank_color}{BOLD}{rank_title}{RESET}")
     print(f"  {BOLD}Points:{RESET}   {GREEN}{points} pts{RESET}")
     print(f"  {BOLD}Coins:{RESET}    {YELLOW}{coins} coins{RESET}")
+    print(f"  {BOLD}Email:{RESET}    {DIM}{email}{RESET}")
     print(f"{divider()}\n")
 
 
+def cmd_stats(client, cfg):
+    """Detailed Cyberium Academy Offensive Dashboard."""
+    print(ASCII_BANNER)
+    cmd_profile(client)
+    cmd_programs(client, cfg)
+
+
 def cmd_banner(client, cfg):
-    from .ui import ASCII_BANNER
     print(ASCII_BANNER)
     cmd_profile(client)
 
@@ -279,100 +335,10 @@ def cmd_video(client, cfg):
 
 
 def cmd_extra(client, cfg):
-    mod_id = cfg.get("current_module_id", 88)
-    data = client.get_questions(mod_id, q_type="extra")
-    if "error" in data:
-        print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
-        return
-
-    mod_name = data.get("module_name", f"Module #{mod_id}")
-    questions = data.get("questions", [])
-    answered = data.get("answered_count", 0)
-    total = data.get("total", 0)
-
-    print(header("BONUS / EXTRA CHALLENGES", f"{mod_name} │ Extra: {answered}/{total}"))
-    if not questions:
-        print(f"  {DIM}[!] No extra challenges for this module yet.{RESET}\n")
-        return
-
-    for q in questions:
-        idx = q.get("index")
-        text = q.get("text", "").replace("\n", " ")
-        is_ans = q.get("answered", False)
-        badge = f"{GREEN}[{ICON_CHECK}]{RESET}" if is_ans else f"{DIM}[ ]{RESET}"
-        print(f" {badge} {BOLD}#{idx:<2}{RESET} {WHITE}{text}{RESET}")
-
-    print(divider())
-    print(f"{DIM}To submit extra answer:{RESET} {CYAN}cyberium submit-extra <idx> '<answer>'{RESET}\n")
-
-
-def cmd_stats(client, cfg):
-    """Detailed Cyberium Academy Offensive Dashboard."""
-    from .ui import ASCII_BANNER, calculate_rank
-    print(ASCII_BANNER)
-
-    prof = client.get_profile()
-    ident = prof.get("identity", {}) if "identity" in prof else {}
-    name = f"{ident.get('firstName', '')} {ident.get('lastName', '')}"
-    division = ident.get("divisionName", "")
-    unit = ident.get("unitName", "")
-    points = ident.get("trainingPoints", 0)
-    coins = ident.get("coinBalance", 0)
-    rank_title, rank_color = calculate_rank(points)
-
-    print(f"  {BOLD}OPERATOR:{RESET}  {WHITE}{name}{RESET}  {DIM}│{RESET}  {BOLD}DIVISION:{RESET} {CYAN}{division}{RESET} {DIM}({unit}){RESET}")
-    print(f"  {BOLD}RANK:{RESET}      {rank_color}{BOLD}{rank_title}{RESET}")
-    print(f"  {BOLD}POINTS:{RESET}    {GREEN}{points} pts{RESET}  {DIM}│{RESET}  {BOLD}COINS:{RESET}    {YELLOW}{coins} coins{RESET}\n")
-
-    # Program Breakdown
-    progs = client.get_programs()
-    prog_list = progs if isinstance(progs, list) else progs.get("programs", [])
-    print(header("ENROLLED SPECIALIZATION TRACKS"))
-    for p in prog_list:
-        code = p.get("code", "")
-        pname = p.get("name", "")
-        lvl = p.get("level", 1)
-        tot = p.get("total_modules", "0")
-        comp = p.get("completed_modules", "0")
-        pct = p.get("completion_pct", 0)
-        p_bar = progress_bar(int(comp), int(tot) if int(tot) > 0 else 1, width=14)
-        print(f"  {BOLD}{code:<6}{RESET} {WHITE}{pname:<26}{RESET} {p_bar} {DIM}(Lvl {lvl}) [{comp}/{tot} Mods]{RESET}")
-    print(divider() + "\n")
-
-
-def cmd_exam(client, cfg):
-    """View module lab test / timed exam details."""
-    mod_id = cfg.get("current_module_id", 88)
-    prog_id = cfg.get("current_program_id", 10)
-    data = client.get_modules(prog_id)
-    modules = data.get("modules", [])
-    for m in modules:
-        if m.get("id") == mod_id:
-            name = m.get("name", "")
-            is_unlocked = m.get("lab_test_unlocked", False)
-            is_comp = m.get("lab_test_completed", False)
-            sps = m.get("lab_test_sps")
-            dur = m.get("lab_test_duration_sec", 0)
-
-            print(header("TIMED LAB EXAM / SPS PERFORMANCE", name))
-            status = f"{GREEN}[✓ COMPLETED]{RESET}" if is_comp else (f"{YELLOW}[UNLOCKED]{RESET}" if is_unlocked else f"{RED}[LOCKED]{RESET}")
-            print(f"  {BOLD}Module:{RESET}       {WHITE}{name}{RESET}")
-            print(f"  {BOLD}Exam Status:{RESET}  {status}")
-            if sps is not None:
-                score_col = GREEN if sps >= 80 else (YELLOW if sps >= 60 else RED)
-                print(f"  {BOLD}SPS Score:{RESET}    {score_col}{sps}% SPS Rating{RESET}")
-            if dur:
-                mins = dur // 60
-                secs = dur % 60
-                print(f"  {BOLD}Duration:{RESET}     {CYAN}{mins}m {secs}s{RESET}")
-            print(divider() + "\n")
-            return
-    print(f"{RED}[!] Module #{mod_id} not found.{RESET}\n")
+    cmd_list(client, cfg, q_type="extra")
 
 
 def cmd_note(cfg, args):
-    """Add or read personal scratchpad note for a question."""
-    from .config import get_note, save_note
     mod_id = cfg.get("current_module_id", 88)
     q_idx = args.index
     note_text = " ".join(args.text) if args.text else None
@@ -391,7 +357,6 @@ def cmd_note(cfg, args):
 
 
 def cmd_search(client, cfg, term):
-    """Search questions in current module by keyword."""
     mod_id = cfg.get("current_module_id", 88)
     data = client.get_questions(mod_id)
     if "error" in data:
@@ -416,6 +381,26 @@ def cmd_search(client, cfg, term):
     print(divider() + f"\n{GREEN}Found {len(matches)} matching question(s).{RESET}\n")
 
 
+def cmd_themes(cfg):
+    current = cfg.get("theme", "cyberpunk")
+    print(header("AVAILABLE TERMINAL THEMES"))
+    for tid, info in THEMES.items():
+        mark = f"{CYAN}{BOLD}❯{RESET}" if tid == current else " "
+        print(f" {mark} {BOLD}{tid:<12}{RESET} {WHITE}{info['name']:<28}{RESET} {DIM}– {info['desc']}{RESET}")
+    print(divider())
+    print(f"{DIM}To switch theme:{RESET} {CYAN}cyberium set-theme <name>{RESET}\n")
+
+
+def cmd_set_theme(cfg, theme_name):
+    tname = theme_name.lower().strip()
+    if tname not in THEMES:
+        print(f"{RED}[!] Unknown theme '{theme_name}'. Available: {', '.join(THEMES.keys())}{RESET}")
+        return
+    cfg["theme"] = tname
+    save_config(cfg)
+    print(f"{GREEN}[{ICON_CHECK}] Theme set to {BOLD}{THEMES[tname]['name']}{RESET}!\n")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Cyberium Academy Official Terminal Client & Submission Tool",
@@ -424,26 +409,27 @@ def main():
   cyberium                      # Show current active question
   cyberium list                 # List all questions and statuses
   cyberium submit "grep -rl"    # Submit answer to current question
+  cyberium submit-extra 1 "ans" # Submit answer to bonus/extra challenge #1
   cyberium modules              # List modules in active program
   cyberium set-module 88        # Switch to Module 88
   cyberium programs             # List enrolled programs
-  cyberium set-program 10       # Switch to Program 10 (ZX310)
-  cyberium stats                # Full operator rank, progress & coin stats
-  cyberium exam                 # View timed lab exam / SPS performance
+  cyberium set-program ZX310    # Switch to Program ZX310 / ID 10
+  cyberium extra                # View bonus / extra challenges
+  cyberium themes               # List color palettes
+  cyberium set-theme matrix     # Switch to matrix / classic theme
+  cyberium stats                # Full operator rank, progress & stats
   cyberium note 14 "memo"       # Save personal note for question #14
   cyberium search "wget"        # Search questions by keyword
   cyberium book                 # View course PDF book link
   cyberium video                # View HD video lecture link
-  cyberium extra                # View bonus / extra challenges
-  cyberium banner               # View stylized ASCII banner & stats
-  cyberium profile              # View student stats & points
+  cyberium profile              # View student profile & points
   cyberium tui                  # Launch full-screen interactive TUI
   cyberium login                # Update session cookies
 """
     )
     subparsers = parser.add_subparsers(dest="command")
 
-    subparsers.add_parser("status", help="Show current question & progress (default)")
+    subparsers.add_parser("status", aliases=["current", "show"], help="Show current question & progress (default)")
     subparsers.add_parser("list", help="List all questions in current module")
     subparsers.add_parser("modules", help="List all modules in current program")
     subparsers.add_parser("programs", help="List all enrolled programs")
@@ -453,7 +439,10 @@ def main():
     subparsers.add_parser("book", help="Get official course PDF book link")
     subparsers.add_parser("video", help="Get HD video lecture streaming link")
     subparsers.add_parser("extra", help="List bonus/extra challenges")
-    subparsers.add_parser("exam", help="View module timed lab exam & SPS score")
+    subparsers.add_parser("themes", help="List all available terminal themes")
+
+    set_theme_parser = subparsers.add_parser("set-theme", help="Set active terminal theme")
+    set_theme_parser.add_argument("name", help="Theme name (cyberpunk, catppuccin, matrix, nord, monokai, classic)")
 
     search_parser = subparsers.add_parser("search", help="Search questions by keyword")
     search_parser.add_argument("term", help="Search term/keyword")
@@ -467,12 +456,18 @@ def main():
 
     submit_parser = subparsers.add_parser("submit", help="Submit answer to current question")
     submit_parser.add_argument("answer", nargs="+", help="The answer string to submit")
+    submit_parser.add_argument("-x", "--extra", action="store_true", help="Submit to extra challenge instead of core lab")
+    submit_parser.add_argument("-i", "--index", type=int, default=None, help="Question index to submit to")
+
+    submit_extra_parser = subparsers.add_parser("submit-extra", help="Submit answer to extra/bonus challenge")
+    submit_extra_parser.add_argument("index", type=int, help="Extra challenge index")
+    submit_extra_parser.add_argument("answer", nargs="+", help="The answer string to submit")
 
     set_mod_parser = subparsers.add_parser("set-module", help="Set active module ID")
     set_mod_parser.add_argument("id", type=int, help="Module ID")
 
-    set_prog_parser = subparsers.add_parser("set-program", help="Set active program ID")
-    set_prog_parser.add_argument("id", type=int, help="Program ID")
+    set_prog_parser = subparsers.add_parser("set-program", help="Set active program ID or Code (e.g. 10 or ZX310)")
+    set_prog_parser.add_argument("id", help="Program ID or Code")
 
     args = parser.parse_args()
 
@@ -487,6 +482,14 @@ def main():
         start_tui()
         return
 
+    if args.command == "themes":
+        cmd_themes(cfg)
+        return
+
+    if args.command == "set-theme":
+        cmd_set_theme(cfg, args.name)
+        return
+
     client = ensure_client(cfg)
 
     if args.command in (None, "status", "current", "show"):
@@ -495,7 +498,11 @@ def main():
         cmd_list(client, cfg)
     elif args.command == "submit":
         answer_str = " ".join(args.answer)
-        cmd_submit(client, cfg, answer_str)
+        q_type = "extra" if args.extra else "lab"
+        cmd_submit(client, cfg, answer_str, q_index=args.index, q_type=q_type)
+    elif args.command == "submit-extra":
+        answer_str = " ".join(args.answer)
+        cmd_submit(client, cfg, answer_str, q_index=args.index, q_type="extra")
     elif args.command == "modules":
         cmd_modules(client, cfg)
     elif args.command == "set-module":
@@ -503,13 +510,11 @@ def main():
     elif args.command == "programs":
         cmd_programs(client, cfg)
     elif args.command == "set-program":
-        cmd_set_program(cfg, args.id)
+        cmd_set_program(client, cfg, args.id)
     elif args.command == "profile":
         cmd_profile(client)
     elif args.command == "stats":
         cmd_stats(client, cfg)
-    elif args.command == "exam":
-        cmd_exam(client, cfg)
     elif args.command == "note":
         cmd_note(cfg, args)
     elif args.command == "search":

@@ -1,6 +1,6 @@
 """
 ANSI Styling, ASCII Art Branding, and Nerd Font Terminal Presentation
-Strictly clean terminal glyphs and high-contrast color formatting.
+Strictly clean terminal glyphs, theme palettes, and high-contrast color formatting.
 """
 
 # ANSI Color Palette
@@ -27,7 +27,7 @@ ICON_POINT = "◆"
 ICON_BOOK = "󰂿"
 ICON_VIDEO = "󰕧"
 ICON_STAR = "★"
-
+ICON_THEME = "󰏘"
 
 ASCII_BANNER = rf"""{CYAN}{BOLD}
   ██████╗██╗   ██╗██████╗ ███████╗██████╗ ██╗██╗   ██╗███╗   ███╗
@@ -38,6 +38,87 @@ ASCII_BANNER = rf"""{CYAN}{BOLD}
   ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝     ╚═╝{RESET}
 {DIM}                 ACADEMY OFFENSIVE LAB CLIENT v2.0{RESET}
 """
+
+THEMES = {
+    "cyberpunk": {
+        "name": "Cyberpunk / Neon (Default)",
+        "desc": "High-contrast Cyan, Emerald, and Amber hues",
+        "colors": {
+            "text": 1,    # White
+            "accent": 2,  # Cyan
+            "solved": 3,  # Green
+            "active": 4,  # Yellow
+            "locked": 5,  # Red
+            "badge": 6,   # Magenta
+            "border": 7   # Dim / Blue
+        }
+    },
+    "catppuccin": {
+        "name": "Catppuccin Mocha",
+        "desc": "Comfortable pastel sapphire, peach, and mauve",
+        "colors": {
+            "text": 1,
+            "accent": 2,
+            "solved": 3,
+            "active": 4,
+            "locked": 5,
+            "badge": 6,
+            "border": 7
+        }
+    },
+    "matrix": {
+        "name": "Matrix Hacker",
+        "desc": "Monochromatic hacker aesthetic with bright green glow",
+        "colors": {
+            "text": 3,    # Green text
+            "accent": 3,  # Green accent
+            "solved": 1,  # White solved
+            "active": 4,  # Yellow active
+            "locked": 5,  # Red locked
+            "badge": 3,   # Green badge
+            "border": 7   # Dim border
+        }
+    },
+    "nord": {
+        "name": "Nordic Frost",
+        "desc": "Arctic blue, cool cyan, and frosty white tones",
+        "colors": {
+            "text": 1,
+            "accent": 2,
+            "solved": 3,
+            "active": 2,
+            "locked": 5,
+            "badge": 2,
+            "border": 1
+        }
+    },
+    "monokai": {
+        "name": "Monokai Pro",
+        "desc": "Vibrant sunshine yellow, emerald, and hot pink",
+        "colors": {
+            "text": 1,
+            "accent": 4,  # Yellow
+            "solved": 3,  # Green
+            "active": 2,  # Cyan
+            "locked": 5,  # Red
+            "badge": 6,   # Magenta
+            "border": 7
+        }
+    },
+    "classic": {
+        "name": "Standard Linux ANSI",
+        "desc": "Pure standard 8-color fallback for standard Linux/TTY terminals",
+        "colors": {
+            "text": 1,
+            "accent": 2,
+            "solved": 3,
+            "active": 4,
+            "locked": 5,
+            "badge": 1,
+            "border": 1
+        }
+    }
+}
 
 
 def header(title, subtitle=None):
@@ -93,4 +174,3 @@ def calculate_rank(points):
         return "LVL 2 ◆ SECURITY ANALYST", BLUE
     else:
         return "LVL 1 ◆ CYBER RECRUIT", WHITE
-
