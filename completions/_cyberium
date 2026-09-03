@@ -1,0 +1,88 @@
+#compdef cyberium
+
+_cyberium() {
+    local -a commands
+    commands=(
+        'status:Show current active question and progress'
+        'current:Show current active question and progress'
+        'list:List all questions in current module'
+        'submit:Submit answer to current question'
+        'submit-extra:Submit answer to bonus/extra challenge'
+        'modules:List all modules in current program'
+        'set-module:Set or choose active module'
+        'programs:List all 14 enrolled programs'
+        'switch:Switch active program/track (e.g. ZX310, ZX301, NX201)'
+        'set-program:Switch active program/track'
+        'extra:View bonus / extra challenges'
+        'themes:List available terminal color palettes'
+        'set-theme:Set active terminal theme'
+        'profile:Show student profile and score'
+        'stats:Full student operator dashboard and rank'
+        'banner:Display Cyberium banner and stats'
+        'book:Get official course PDF book link'
+        'video:Get HD video lecture streaming link'
+        'note:Add or read question notes'
+        'search:Search questions by keyword'
+        'tui:Launch interactive full-screen TUI dashboard'
+        'login:Interactive login / cookie setup'
+    )
+
+    _arguments -C \
+        '1: :->command' \
+        '*: :->args'
+
+    case $state in
+        command)
+            _describe -t commands 'cyberium command' commands
+            ;;
+        args)
+            case $line[1] in
+                switch|set-program|program|track)
+                    local -a progs
+                    progs=(
+                        'ZX310:Cyber Warfare (Lvl 6)'
+                        'ZX301:Penetration Testing (Lvl 3)'
+                        'ZX305:Network Security (Lvl 4)'
+                        'ZX322:Offensive Python (Lvl 5)'
+                        'NX201:Network Research (Lvl 2)'
+                        'NX212:Windows Forensics (Lvl 3)'
+                        'NX216:Network Forensics (Lvl 4)'
+                        'NX220:SOC Analyst (Lvl 3)'
+                        'NX232:Malware Analysis (Lvl 6)'
+                        'XE101:Intro to Cyber (Lvl 1)'
+                        'XE103:Linux Fundamentals (Lvl 1)'
+                        'XE105:Python Fundamentals (Lvl 1)'
+                        'XE107:Web Fundamentals (Lvl 1)'
+                        'XE109:AI Fundamentals (Lvl 1)'
+                    )
+                    _describe -t progs 'track' progs
+                    ;;
+                set-theme|theme)
+                    local -a themes
+                    themes=(
+                        'cyberium:Official Cyberium Academy'
+                        'cyberpunk:Cyberpunk Neon'
+                        'dracula:Dracula Dark'
+                        'tokyo-night:Tokyo Night'
+                        'catppuccin:Catppuccin Mocha'
+                        'gruvbox:Gruvbox Dark'
+                        'everforest:Everforest'
+                        'rose-pine:Rosé Pine'
+                        'kanagawa:Kanagawa'
+                        'nord:Nordic Frost'
+                        'matrix:Matrix Hacker'
+                        'synthwave84:Synthwave 84'
+                        'monokai:Monokai Pro'
+                        'oxocarbon:Oxocarbon'
+                        'retro-fallout:Fallout Pip-Boy'
+                        'solarized:Solarized Dark'
+                        'classic:Standard Linux ANSI'
+                    )
+                    _describe -t themes 'theme' themes
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+_cyberium "$@"
