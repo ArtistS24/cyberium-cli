@@ -5,21 +5,26 @@ Equal capabilities with TUI: Multi-Program tracks, Extra Labs, Notes, Search, Th
 """
 
 import sys
+import os
 import argparse
-from .config import load_config, save_config, interactive_login, get_note, save_note, load_notes
-from .api import CyberiumClient
+import subprocess
+from .config import (
+    load_config, save_config, interactive_login, get_note, save_note, load_notes,
+    auto_sync_firefox_cookies, clear_session, BOOKS_DIR
+)
+from .api import CyberiumClient, get_book_info, download_file
 from .ui import (
     RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE, DIM, BOLD, RESET,
     ICON_CHECK, ICON_CROSS, ICON_PENDING, ICON_ARROW, ICON_POINTER, ICON_USER, ICON_FOLDER, ICON_POINT, ICON_THEME,
     header, divider, badge_success, badge_pending, badge_failed, badge_empty, progress_bar,
-    calculate_rank, THEMES, ASCII_BANNER
+    calculate_rank, THEMES, ASCII_BANNER, copy_to_clipboard, hyperlink, format_question_text, extract_urls
 )
 
 
 def ensure_client(cfg):
     """Ensures a valid authenticated CyberiumClient exists, prompting login if needed."""
     cookies = cfg.get("cookies", {})
-    if not cookies or not cookies.get("connect.sid"):
+    if not cookies or not cookies.get("cyb_rt"):
         print(f"\n{YELLOW}{BOLD}[{ICON_CROSS}] No Cyberium student session detected.{RESET}")
         print(f"{WHITE}Each student needs their own session cookies to submit answers.{RESET}\n")
         choice = input(f"{CYAN}Would you like to log in now? [Y/n]: {RESET}").strip().lower()
@@ -32,6 +37,47 @@ def ensure_client(cfg):
     return CyberiumClient(cfg)
 
 
+def ensure_active_context(client, cfg):
+    """
+    Ensures that cfg has valid current_program_id and current_module_id.
+    If missing, queries the live Cyberium API to dynamically auto-select the active track and module.
+    """
+    prog_id = cfg.get("current_program_id")
+    mod_id = cfg.get("current_module_id")
+    needs_save = False
+
+    if not prog_id and client:
+        try:
+            progs_data = client.get_programs()
+            programs = progs_data if isinstance(progs_data, list) else (progs_data.get("programs", []) if isinstance(progs_data, dict) else [])
+            if programs:
+                active_p = next((p for p in programs if p.get("completion_pct", 0) > 0), programs[0])
+                prog_id = active_p.get("id")
+                cfg["current_program_id"] = prog_id
+                needs_save = True
+        except Exception:
+            pass
+
+    if not mod_id and prog_id and client:
+        try:
+            mods_data = client.get_modules(prog_id)
+            modules = mods_data.get("modules", []) if isinstance(mods_data, dict) else []
+            if modules:
+                active_m = next((m for m in modules if m.get("is_open") and not m.get("lab_completed")), None)
+                if not active_m:
+                    active_m = next((m for m in modules if m.get("is_open")), modules[0])
+                mod_id = active_m.get("id")
+                cfg["current_module_id"] = mod_id
+                needs_save = True
+        except Exception:
+            pass
+
+    if needs_save:
+        save_config(cfg)
+
+    return prog_id or 10, mod_id or 88
+
+
 def resolve_question_target(client, cfg, target=None, q_type="lab"):
     """
     Intelligently resolves a question target into an integer question index.
@@ -41,7 +87,7 @@ def resolve_question_target(client, cfg, target=None, q_type="lab"):
     - Section number: "2.2", "2.2.", "1.10" -> Resolves to question index #14
     Returns: (index, question_obj, module_name)
     """
-    mod_id = cfg.get("current_module_id", 88)
+    _, mod_id = ensure_active_context(client, cfg)
     data = client.get_questions(mod_id, q_type=q_type)
     if "error" in data:
         return None, None, f"Module #{mod_id}"
@@ -84,7 +130,7 @@ def resolve_question_target(client, cfg, target=None, q_type="lab"):
 
 
 def cmd_current(client, cfg):
-    mod_id = cfg.get("current_module_id", 88)
+    _, mod_id = ensure_active_context(client, cfg)
     data = client.get_questions(mod_id)
     if "error" in data:
         print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
@@ -106,11 +152,17 @@ def cmd_current(client, cfg):
     if first_unanswered is not None and first_unanswered < len(questions):
         q = questions[first_unanswered]
         idx = q.get("index", first_unanswered)
-        text = q.get("text", "")
+        raw_text = q.get("text", "")
+        formatted_text, urls = format_question_text(raw_text, ansi=True)
         note = get_note(mod_id, idx)
 
         print(f"  {YELLOW}{BOLD}[{ICON_PENDING}] CURRENT ACTIVE OBJECTIVE (#{idx}):{RESET}")
-        print(f"  {WHITE}{BOLD}{text}{RESET}\n")
+        print(f"  {WHITE}{BOLD}{formatted_text}{RESET}\n")
+        if urls:
+            for u in urls:
+                fname = u.split("/")[-1] if "/" in u else u
+                print(f"  {CYAN}󰌹 Resource Link:{RESET} {CYAN}{hyperlink(u, u)}{RESET}")
+            print()
         if note:
             print(f"  {CYAN}{BOLD}󰉋 Personal Note:{RESET} {CYAN}{note}{RESET}\n")
         print(f"{DIM}To submit your answer:{RESET} {CYAN}cyberium submit \"<your command or flag>\"{RESET}")
@@ -120,7 +172,7 @@ def cmd_current(client, cfg):
 
 
 def cmd_list(client, cfg, q_type="lab"):
-    mod_id = cfg.get("current_module_id", 88)
+    _, mod_id = ensure_active_context(client, cfg)
     data = client.get_questions(mod_id, q_type=q_type)
     if "error" in data:
         print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
@@ -141,21 +193,23 @@ def cmd_list(client, cfg, q_type="lab"):
 
     for idx, q in enumerate(questions):
         q_idx = q.get("index", idx)
-        text = q.get("text", "").replace("\n", " ")
+        raw_text = q.get("text", "").replace("\n", " ")
+        text, urls = format_question_text(raw_text, ansi=True)
         is_answered = q.get("answered", False)
         is_active = (idx == first_unanswered)
         note = get_note(mod_id, q_idx)
         note_badge = f" {CYAN}󰉋{RESET}" if note else ""
+        res_badge = f" {CYAN}󰌹{RESET}" if urls else ""
 
         if is_answered:
             badge = f"{GREEN}[{ICON_CHECK}]{RESET}"
-            line = f" {badge} {DIM}#{q_idx:<2}{note_badge} {text}{RESET}"
+            line = f" {badge} {DIM}#{q_idx:<2}{note_badge}{res_badge} {text}{RESET}"
         elif is_active:
             badge = f"{YELLOW}{BOLD}[{ICON_PENDING}]{RESET}"
-            line = f" {badge} {YELLOW}{BOLD}#{q_idx:<2}{note_badge} {text}{RESET}"
+            line = f" {badge} {YELLOW}{BOLD}#{q_idx:<2}{note_badge}{res_badge} {text}{RESET}"
         else:
             badge = f"{DIM}[ ]{RESET}"
-            line = f" {badge} {WHITE}#{q_idx:<2}{note_badge} {text}{RESET}"
+            line = f" {badge} {WHITE}#{q_idx:<2}{note_badge}{res_badge} {text}{RESET}"
 
         print(line)
 
@@ -163,7 +217,7 @@ def cmd_list(client, cfg, q_type="lab"):
 
 
 def cmd_submit(client, cfg, answer_str, q_index=None, q_type="lab"):
-    mod_id = cfg.get("current_module_id", 88)
+    _, mod_id = ensure_active_context(client, cfg)
 
     if q_index is not None:
         idx, _, _ = resolve_question_target(client, cfg, q_index, q_type=q_type)
@@ -197,7 +251,7 @@ def cmd_submit(client, cfg, answer_str, q_index=None, q_type="lab"):
 
 
 def cmd_modules(client, cfg):
-    prog_id = cfg.get("current_program_id", 10)
+    prog_id, _ = ensure_active_context(client, cfg)
     data = client.get_modules(prog_id)
     if "error" in data:
         print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
@@ -382,29 +436,30 @@ def cmd_profile(client):
         print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
         return
 
-    ident = data.get("identity", {})
-    name = f"{ident.get('firstName', '')} {ident.get('lastName', '')}"
-    scode = ident.get("sCode", "s2")
+    ident = data.get("identity", {}) if isinstance(data, dict) else {}
+    name = f"{ident.get('firstName', '')} {ident.get('lastName', '')}".strip() or "Student Operator"
+    scode = ident.get("studentCode") or ident.get("sCode", "")
     email = ident.get("email", "")
-    division = ident.get("divisionName", "John Bryce")
+    division = ident.get("divisionName", "Cyberium Academy")
     unit = ident.get("unitName", "RTX2026")
-    points = ident.get("trainingPoints", 134)
-    coins = ident.get("coinBalance", 63)
+    points = ident.get("trainingPoints", 0)
+    coins = ident.get("coinBalance", 0)
     rank_title, rank_color = calculate_rank(points)
 
-    pbr = data.get("pbr", {})
-    off_pbr = pbr.get("offense", 97)
-    soc_pbr = pbr.get("soc", 98)
-    def_pbr = pbr.get("defense", 96)
+    pbr = data.get("pbr", {}) if isinstance(data, dict) else {}
+    off_pbr = pbr.get("offense", 0)
+    soc_pbr = pbr.get("soc", 0)
+    def_pbr = pbr.get("defense", 0)
 
-    trophies = data.get("trophies", {})
-    gold_t = trophies.get("gold", 8)
-    silv_t = trophies.get("silver", 2)
-    brnz_t = trophies.get("bronze", 1)
-    certs = len(data.get("certifications", []))
+    trophies = data.get("trophies", {}) if isinstance(data, dict) else {}
+    gold_t = trophies.get("gold", 0)
+    silv_t = trophies.get("silver", 0)
+    brnz_t = trophies.get("bronze", 0)
+    certs = len(data.get("certifications", [])) if isinstance(data, dict) else 0
 
-    print(header("OPERATOR DOSSIER", "Official Student Profile"))
-    print(f"  {BOLD}Operator:{RESET}  {WHITE}{name} ({scode}){RESET}  {DIM}│{RESET}  {BOLD}Division:{RESET} {CYAN}{division}{RESET} {DIM}({unit}){RESET}")
+    print(header("OPERATOR DOSSIER", "Student Profile"))
+    scode_str = f" ({scode})" if scode else ""
+    print(f"  {BOLD}Operator:{RESET}  {WHITE}{name}{scode_str}{RESET}  {DIM}│{RESET}  {BOLD}Division:{RESET} {CYAN}{division}{RESET} {DIM}({unit}){RESET}")
     print(f"  {BOLD}Rank:{RESET}      {rank_color}{BOLD}{rank_title}{RESET}  {DIM}│{RESET}  {BOLD}Status:{RESET}   {GREEN}SPECTO ● LIVE{RESET}")
     print(f"  {BOLD}Points:{RESET}    {GREEN}{points} pts{RESET}  {DIM}│{RESET}  {BOLD}Coins:{RESET}    {YELLOW}{coins} coins{RESET}  {DIM}│{RESET}  {BOLD}Certs:{RESET} {certs} verified\n")
     print(f"  {BOLD}Performance Benchmark (PBR):{RESET}")
@@ -417,7 +472,21 @@ def cmd_profile(client):
 def cmd_stats(client, cfg):
     """Detailed Cyberium Academy Offensive Dashboard."""
     print(ASCII_BANNER)
+    data = client.get_profile()
     cmd_profile(client)
+    stats = data.get("stats", {}) if isinstance(data, dict) else {}
+    if stats:
+        labs_comp = stats.get("labsCompleted", 0)
+        tot_labs = stats.get("totalLabs", 0)
+        tests_comp = stats.get("labTestsCompleted", 0)
+        sps = stats.get("avgLabTestSps", 0)
+        lab_hrs = stats.get("totalLabHours", 0)
+        scen_hrs = stats.get("totalScenarioHours", 0)
+        scen_pass = stats.get("scenariosPassed", 0)
+        print(f"  {BOLD}Academy Lab Analytics:{RESET}")
+        print(f"    {WHITE}Labs Completed:{RESET} {labs_comp}/{tot_labs}  {DIM}│{RESET}  {WHITE}Tests Completed:{RESET} {tests_comp}  {DIM}│{RESET}  {WHITE}Avg SPS:{RESET} {sps}%")
+        print(f"    {WHITE}Lab Hours:{RESET} {lab_hrs}h  {DIM}│{RESET}  {WHITE}Scenario Hours:{RESET} {scen_hrs}h  {DIM}│{RESET}  {WHITE}Scenarios Passed:{RESET} {scen_pass}\n")
+        print(f"{divider()}\n")
     cmd_programs(client, cfg)
 
 
@@ -426,9 +495,8 @@ def cmd_banner(client, cfg):
     cmd_profile(client)
 
 
-def cmd_book(client, cfg):
-    mod_id = cfg.get("current_module_id", 88)
-    prog_id = cfg.get("current_program_id", 10)
+def cmd_book(client, cfg, open_browser=False, download=False, copy_link=False, dest_path=None):
+    prog_id, mod_id = ensure_active_context(client, cfg)
     data = client.get_modules(prog_id)
     modules = data.get("modules", [])
     mod_name = f"Module #{mod_id}"
@@ -437,20 +505,53 @@ def cmd_book(client, cfg):
             mod_name = m.get("name", mod_name)
             break
 
-    resp = client.get_book(mod_id)
-    url = resp.get("url")
-    if url:
-        print(header("OFFICIAL COURSE BOOK (PDF)", mod_name))
-        print(f"  {BOLD}Module:{RESET}          {WHITE}{mod_name}{RESET}")
-        print(f"  {BOLD}Direct PDF Link:{RESET} {CYAN}{url}{RESET}")
-        print(f"\n{DIM}To open in browser/reader:{RESET} {YELLOW}xdg-open '{url}'{RESET}\n")
-    else:
+    binfo = client.get_book_info(mod_id, mod_name)
+    if not binfo or not binfo.get("url"):
         print(f"{RED}[!] No PDF course book available for {mod_name}.{RESET}\n")
+        return
+
+    url = binfo["url"]
+    fname = binfo.get("filename", f"Module-{mod_id}-Book.pdf")
+
+    print(header("COURSE BOOK (PDF)", mod_name))
+    print(f"  {BOLD}Module:{RESET}      {WHITE}{mod_name}{RESET}")
+    print(f"  {BOLD}Document:{RESET}    {YELLOW}{fname}{RESET}")
+    print(f"  {BOLD}Storage:{RESET}     {CYAN}Cloudflare R2 High-Speed Secure CDN{RESET}")
+    print(f"  {BOLD}Direct Link:{RESET} {DIM}{url}{RESET}\n")
+
+    if copy_link:
+        if copy_to_clipboard(url):
+            print(f"  {GREEN}[✓] Copied full PDF download link to clipboard!{RESET}\n")
+        else:
+            print(f"  {YELLOW}[!] Could not access system clipboard.{RESET}\n")
+
+    if download:
+        target_dir = dest_path if dest_path else os.path.expanduser("~/Downloads")
+        if not os.path.exists(target_dir):
+            target_dir = BOOKS_DIR
+        out_file = os.path.join(target_dir, fname) if os.path.isdir(target_dir) else target_dir
+        print(f"  {CYAN}Downloading {fname}...{RESET}")
+        try:
+            download_file(url, out_file)
+            print(f"  {GREEN}[✓] Saved book to: {BOLD}{out_file}{RESET}\n")
+        except Exception as e:
+            print(f"  {RED}[!] Download error: {e}{RESET}\n")
+
+    if open_browser:
+        try:
+            subprocess.Popen(["xdg-open", url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            print(f"  {GREEN}[✓] Launched course book in default reader/browser.{RESET}\n")
+        except Exception as e:
+            print(f"  {RED}[!] Failed to launch browser: {e}{RESET}\n")
+
+    if not copy_link and not download and not open_browser:
+        print(f"  {DIM}To launch in reader:{RESET}  {YELLOW}cyberium book -o{RESET}")
+        print(f"  {DIM}To save to disk:{RESET}      {YELLOW}cyberium book -d{RESET}")
+        print(f"  {DIM}To copy link:{RESET}         {YELLOW}cyberium book -c{RESET}\n")
 
 
-def cmd_video(client, cfg):
-    mod_id = cfg.get("current_module_id", 88)
-    prog_id = cfg.get("current_program_id", 10)
+def cmd_video(client, cfg, open_browser=False, copy_link=False):
+    prog_id, mod_id = ensure_active_context(client, cfg)
     data = client.get_modules(prog_id)
     modules = data.get("modules", [])
     for m in modules:
@@ -460,12 +561,40 @@ def cmd_video(client, cfg):
             print(header("VIDEO LECTURE", name))
             if video_url:
                 print(f"  {BOLD}Module:{RESET}    {WHITE}{name}{RESET}")
-                print(f"  {BOLD}Watch URL:{RESET} {CYAN}{video_url}{RESET}")
-                print(f"\n{DIM}To watch video lecture:{RESET} {CYAN}xdg-open '{video_url}'{RESET}\n")
+                print(f"  {BOLD}Watch URL:{RESET} {CYAN}{video_url}{RESET}\n")
+                if copy_link:
+                    if copy_to_clipboard(video_url):
+                        print(f"  {GREEN}[✓] Copied streaming URL to clipboard!{RESET}\n")
+                if open_browser:
+                    try:
+                        subprocess.Popen(["xdg-open", video_url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        print(f"  {GREEN}[✓] Launched video in default browser.{RESET}\n")
+                    except Exception as e:
+                        print(f"  {RED}[!] Failed to launch browser: {e}{RESET}\n")
+                if not copy_link and not open_browser:
+                    print(f"  {DIM}To watch in browser:{RESET} {CYAN}cyberium video -o{RESET}")
+                    print(f"  {DIM}To copy stream link:{RESET} {CYAN}cyberium video -c{RESET}\n")
             else:
                 print(f"  {YELLOW}[!] No video lecture available for this module.{RESET}\n")
             return
     print(f"{RED}[!] Module #{mod_id} not found.{RESET}\n")
+
+
+def cmd_sync(client, cfg):
+    """Sync session cookies with local browser and refresh student state."""
+    synced = auto_sync_firefox_cookies(cfg)
+    if synced:
+        print(f"\n{GREEN}[✓] Successfully synced live session cookies from Firefox!{RESET}")
+    else:
+        print(f"\n{YELLOW}[!] Existing configuration is up to date.{RESET}")
+
+    profile = client.get_profile()
+    ident = profile.get("identity", {}) if isinstance(profile, dict) else {}
+    name = f"{ident.get('firstName', '')} {ident.get('lastName', '')}".strip() or "Student"
+    pts = ident.get("trainingPoints", 0)
+    coins = ident.get("coinBalance", 0)
+    rank_title, rank_color = calculate_rank(pts)
+    print(f"  {BOLD}Student:{RESET} {WHITE}{name}{RESET} │ {BOLD}Rank:{RESET} {rank_color}{rank_title}{RESET} │ {GREEN}{pts} pts{RESET} │ {YELLOW}{coins} coins{RESET}\n")
 
 
 def cmd_extra(client, cfg):
@@ -484,7 +613,7 @@ def cmd_note(client, cfg, raw_args):
       cyberium note clear             -> Clear note for current active question
       cyberium note 2.2 clear         -> Clear note for question 2.2 (#14)
     """
-    mod_id = cfg.get("current_module_id", 88)
+    _, mod_id = ensure_active_context(client, cfg)
     tokens = list(raw_args) if raw_args else []
 
     target_idx = None
@@ -558,7 +687,7 @@ def cmd_note(client, cfg, raw_args):
 
 def cmd_notes(client, cfg):
     """List all student scratchpad notes for current module."""
-    mod_id = cfg.get("current_module_id", 88)
+    _, mod_id = ensure_active_context(client, cfg)
     data = client.get_questions(mod_id)
     mod_name = data.get("module_name", f"Module #{mod_id}")
     questions = data.get("questions", [])
@@ -595,7 +724,7 @@ def cmd_notes(client, cfg):
 
 
 def cmd_search(client, cfg, term):
-    mod_id = cfg.get("current_module_id", 88)
+    _, mod_id = ensure_active_context(client, cfg)
     data = client.get_questions(mod_id)
     if "error" in data:
         print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
@@ -611,12 +740,26 @@ def cmd_search(client, cfg, term):
 
     for q in matches:
         idx = q.get("index")
-        text = q.get("text", "").replace("\n", " ")
+        raw_text = q.get("text", "").replace("\n", " ")
+        text, _ = format_question_text(raw_text, ansi=True)
         is_ans = q.get("answered", False)
         badge = f"{GREEN}[{ICON_CHECK}]{RESET}" if is_ans else f"{DIM}[ ]{RESET}"
         print(f" {badge} {BOLD}#{idx:<2}{RESET} {WHITE}{text}{RESET}")
 
     print(divider() + f"\n{GREEN}Found {len(matches)} matching question(s).{RESET}\n")
+
+
+def cmd_logout(client, cfg):
+    """Logs out student session and cleans configuration."""
+    if client:
+        try:
+            client.logout()
+        except Exception:
+            pass
+    clear_session(cfg)
+    print(f"\n{GREEN}[✓] Successfully logged out of Cyberium Academy.{RESET}")
+    print(f"{DIM}Session cookies cleared from local configuration.{RESET}")
+    print(f"{DIM}To log back in, run {CYAN}cyberium sync{DIM} or {CYAN}cyberium login{DIM}.{RESET}\n")
 
 
 def cmd_themes(cfg):
@@ -641,7 +784,7 @@ def cmd_set_theme(cfg, theme_name):
 
 def _run_cli():
     parser = argparse.ArgumentParser(
-        description="Cyberium Academy Official Terminal Client & Submission Tool",
+        description="Cyberium Academy Terminal Client & Submission Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   cyberium                      # Show current active question
@@ -690,8 +833,16 @@ def _run_cli():
     subparsers.add_parser("banner", help="Display Cyberium ASCII banner & stats")
     
     # Media & Addons
-    subparsers.add_parser("book", help="Get official course PDF book link")
-    subparsers.add_parser("video", help="Get HD video lecture streaming link")
+    book_parser = subparsers.add_parser("book", help="Get course PDF book, download, or open")
+    book_parser.add_argument("-o", "--open", action="store_true", help="Open book in default PDF reader/browser")
+    book_parser.add_argument("-d", "--download", action="store_true", help="Download PDF book to disk (~/Downloads)")
+    book_parser.add_argument("-c", "--copy", action="store_true", help="Copy direct PDF URL to clipboard")
+    book_parser.add_argument("--out", default=None, help="Custom output directory or filename for download")
+
+    video_parser = subparsers.add_parser("video", help="Get HD video lecture streaming link")
+    video_parser.add_argument("-o", "--open", action="store_true", help="Open video lecture in browser")
+    video_parser.add_argument("-c", "--copy", action="store_true", help="Copy streaming link to clipboard")
+
     subparsers.add_parser("extra", help="List bonus/extra challenges")
 
     # Themes
@@ -708,7 +859,10 @@ def _run_cli():
     note_parser.add_argument("-a", "--all", action="store_true", help="List all notes across module")
 
     # Core
-    subparsers.add_parser("login", help="Interactive login / cookie setup")
+    login_parser = subparsers.add_parser("login", help="Interactive login / session sync")
+    login_parser.add_argument("-m", "--manual", action="store_true", help="Force manual cookie entry")
+    subparsers.add_parser("logout", help="Log out and clear session credentials")
+    subparsers.add_parser("sync", aliases=["refresh"], help="Sync live session cookies with browser")
     subparsers.add_parser("tui", help="Launch interactive full-screen TUI dashboard")
 
     # Submission
@@ -726,7 +880,15 @@ def _run_cli():
     cfg = load_config()
 
     if args.command == "login":
-        interactive_login(cfg)
+        interactive_login(cfg, force_manual=getattr(args, "manual", False))
+        return
+
+    if args.command == "logout":
+        try:
+            client = CyberiumClient(cfg) if cfg.get("cookies", {}).get("cyb_rt") else None
+        except Exception:
+            client = None
+        cmd_logout(client, cfg)
         return
 
     if args.command == "tui":
@@ -777,9 +939,11 @@ def _run_cli():
     elif args.command == "banner":
         cmd_banner(client, cfg)
     elif args.command == "book":
-        cmd_book(client, cfg)
+        cmd_book(client, cfg, open_browser=args.open, download=args.download, copy_link=args.copy, dest_path=args.out)
     elif args.command == "video":
-        cmd_video(client, cfg)
+        cmd_video(client, cfg, open_browser=args.open, copy_link=args.copy)
+    elif args.command in ("sync", "refresh"):
+        cmd_sync(client, cfg)
     elif args.command == "extra":
         cmd_extra(client, cfg)
     else:
