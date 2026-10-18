@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cyberium-cli"
 version = "1.0.0"
-description = "Cyberium Academy Official Terminal Client & Live Submission CLI"
+description = "Cyberium Academy Terminal Client & Live Submission CLI"
 readme = "README.md"
 authors = [
     { name = "Denis Albin", email = "albindeniswork@gmail.com" }
@@ -15,3 +15,4 @@ dependencies = []
 
 [project.scripts]
 cyberium = "cyberium.cli:main"
+cyberium-tui = "cyberium.tui:start_tui"
