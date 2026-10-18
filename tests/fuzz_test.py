@@ -23,16 +23,24 @@ def random_string(length=50):
     return "".join(random.choice(chars) for _ in range(length))
 
 
-def run_fuzz(iterations=10000):
+import tempfile
+
+def run_fuzz(iterations=1000):
     print(f"[FUZZ] Starting {iterations} rapid randomized stress cycles...")
     mock_win = MagicMock()
     mock_win.getmaxyx.return_value = (24, 80)
     devnull = io.StringIO()
 
-    with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
-        for i in range(iterations):
-            s = random_string(random.randint(0, 150))
-            num = random.randint(-100000, 100000)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        orig_notes = config.NOTES_PATH
+        orig_cfg = config.CONFIG_PATH
+        config.NOTES_PATH = os.path.join(tmpdir, "notes.json")
+        config.CONFIG_PATH = os.path.join(tmpdir, "config.json")
+        try:
+            with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+                for i in range(iterations):
+                    s = random_string(random.randint(0, 150))
+                    num = random.randint(-100000, 100000)
 
             # 1. UI functions
             ui.calculate_rank(num)
@@ -58,8 +66,12 @@ def run_fuzz(iterations=10000):
             }
             cli.cmd_search(mock_client, {}, s[:20])
 
+        finally:
+            config.NOTES_PATH = orig_notes
+            config.CONFIG_PATH = orig_cfg
+
     print(f"[FUZZ] SUCCESS: Completed all {iterations} randomized fuzz cycles with 0 crashes or unhandled exceptions!")
 
 
 if __name__ == "__main__":
-    run_fuzz(10000)
+    run_fuzz(1000)

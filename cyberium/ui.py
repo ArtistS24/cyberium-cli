@@ -1,6 +1,6 @@
 """
-ANSI Styling, Cyberium Official Theme, and Nerd Font Presentation
-Matches the official dark obsidian & electric cyan Cyberium Academy dashboard.
+ANSI Styling, Cyberium Theme, and Nerd Font Presentation
+Matches the dark obsidian & electric cyan Cyberium Academy dashboard.
 """
 
 # ANSI Color Palette
@@ -44,8 +44,8 @@ ASCII_BANNER = CYBERIUM_LOGO
 
 THEMES = {
     "cyberium": {
-        "name": "Cyberium Official (Default)",
-        "desc": "Official Obsidian Black & Electric Cyan Academy Palette",
+        "name": "Cyberium Classic (Default)",
+        "desc": "Obsidian Black & Electric Cyan Academy Palette",
         "pair1": "white",    # Text
         "pair2": "cyan",     # Accent / Electric Blue Logo
         "pair3": "green",    # Solved Objectives
@@ -279,7 +279,7 @@ def progress_bar(current, total, width=20):
 
 
 def calculate_rank(points):
-    """Calculates official Cyberium Academy student rank matching web dashboard."""
+    """Calculates Cyberium Academy student rank matching web dashboard."""
     try:
         pts = int(points)
     except (ValueError, TypeError):
@@ -296,3 +296,96 @@ def calculate_rank(points):
         return "★ APPRENTICE", BLUE
     else:
         return "★ RECRUIT", WHITE
+
+
+def hyperlink(url, text=None):
+    """Generates an OSC 8 terminal hyperlink supported by modern terminals (GNOME, Kitty, Alacritty, WezTerm)."""
+    if not text:
+        text = url
+    return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
+
+
+def copy_to_clipboard(text):
+    """
+    Copies text to system clipboard.
+    Supports Wayland (wl-copy), X11 (xclip / xsel), and OSC 52 sequence (SSH / tmux).
+    """
+    import os
+    import sys
+    import base64
+    import subprocess
+
+    copied = False
+
+    # 1. Wayland
+    if os.environ.get("WAYLAND_DISPLAY"):
+        try:
+            p = subprocess.Popen(["wl-copy"], stdin=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            p.communicate(text.encode("utf-8"))
+            if p.returncode == 0:
+                copied = True
+        except Exception:
+            pass
+
+    # 2. X11
+    if not copied and os.environ.get("DISPLAY"):
+        try:
+            p = subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE, stderr=subprocess.DEVNULL)
+            p.communicate(text.encode("utf-8"))
+            if p.returncode == 0:
+                copied = True
+        except Exception:
+            pass
+        if not copied:
+            try:
+                p = subprocess.Popen(["xsel", "--clipboard", "--input"], stdin=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                p.communicate(text.encode("utf-8"))
+                if p.returncode == 0:
+                    copied = True
+            except Exception:
+                pass
+
+    # 3. OSC 52 ANSI sequence (works natively over SSH, tmux, and modern terminal emulators)
+    try:
+        b64 = base64.b64encode(text.encode("utf-8")).decode("ascii")
+        if os.environ.get("TMUX"):
+            osc = f"\033Ptmux;\033\033]52;c;{b64}\a\033\\"
+        else:
+            osc = f"\033]52;c;{b64}\a"
+        sys.stdout.write(osc)
+        sys.stdout.flush()
+        copied = True
+    except Exception:
+        pass
+
+    return copied
+
+
+def extract_urls(text):
+    """Extracts all URLs embedded in <url=...> tags from question text."""
+    import re
+    if not text:
+        return []
+    return re.findall(r"<url=([^>]+)>", text)
+
+
+def format_question_text(raw_text, ansi=True):
+    """
+    Parses embedded <url=...> tags in question text.
+    Returns: (cleaned_text, list_of_urls)
+    """
+    import re
+    urls = []
+    if not raw_text:
+        return "", []
+
+    def _replace_url(match):
+        url = match.group(1).strip()
+        urls.append(url)
+        fname = url.split("/")[-1] if "/" in url else url
+        if ansi:
+            return f" [{CYAN}Link: {fname}{RESET}]"
+        return f" [Link: {fname}]"
+
+    cleaned = re.sub(r"<url=([^>]+)>", _replace_url, raw_text)
+    return cleaned, urls

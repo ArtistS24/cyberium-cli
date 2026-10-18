@@ -19,12 +19,15 @@ _cyberium() {
         'profile:Show student profile and score'
         'stats:Full student operator dashboard and rank'
         'banner:Display Cyberium banner and stats'
-        'book:Get official course PDF book link'
+        'book:Get course PDF book, download, or open'
         'video:Get HD video lecture streaming link'
-        'note:Add or read question notes'
+        'note:Add, view, or clear question scratchpad notes'
+        'notes:View all saved notes across current module'
         'search:Search questions by keyword'
+        'sync:Sync live session cookies from Firefox'
+        'logout:Log out and clear session credentials'
         'tui:Launch interactive full-screen TUI dashboard'
-        'login:Interactive login / cookie setup'
+        'login:Interactive login / session sync'
     )
 
     _arguments -C \
@@ -60,7 +63,7 @@ _cyberium() {
                 set-theme|theme)
                     local -a themes
                     themes=(
-                        'cyberium:Official Cyberium Academy'
+                        'cyberium:Cyberium Classic Theme'
                         'cyberpunk:Cyberpunk Neon'
                         'dracula:Dracula Dark'
                         'tokyo-night:Tokyo Night'

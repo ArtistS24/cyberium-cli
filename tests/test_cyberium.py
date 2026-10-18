@@ -7,6 +7,7 @@ import os
 import sys
 import unittest
 import tempfile
+import shutil
 import json
 import urllib.error
 from unittest.mock import patch, MagicMock
@@ -376,6 +377,113 @@ class TestTUIHelpers(unittest.TestCase):
         # Text clipping to max width
         tui.safe_addstr(mock_win, 5, 75, "1234567890")
         mock_win.addstr.assert_called_with(5, 75, "12345", 0)
+
+
+class TestNewFeatures(unittest.TestCase):
+    def test_get_filename_from_url(self):
+        url1 = "https://r2.cloudflarestorage.com/book.pdf?response-content-disposition=inline%3B%20filename%3D%22Cyber%20Warfare-Module%2008-Post%20%28Linux%29-Book.pdf%22"
+        self.assertEqual(api.get_filename_from_url(url1), "Cyber Warfare-Module 08-Post (Linux)-Book.pdf")
+
+        url2 = "https://r2.cloudflarestorage.com/path/to/custom_guide.pdf"
+        self.assertEqual(api.get_filename_from_url(url2), "custom_guide.pdf")
+
+        url3 = "https://r2.cloudflarestorage.com/noext"
+        self.assertEqual(api.get_filename_from_url(url3, fallback="fallback.pdf"), "fallback.pdf")
+
+    @patch("urllib.request.urlopen")
+    def test_download_file(self, mock_urlopen):
+        mock_resp = MagicMock()
+        mock_resp.read.side_effect = [b"chunk1", b"chunk2", b""]
+        mock_resp.headers.get.return_value = "12"
+        mock_urlopen.return_value.__enter__.return_value = mock_resp
+
+        temp_dir = tempfile.mkdtemp()
+        dest = os.path.join(temp_dir, "test.pdf")
+        progress = []
+
+        api.download_file("https://mock.url/file.pdf", dest, progress_callback=lambda d, t: progress.append((d, t)))
+
+        self.assertTrue(os.path.exists(dest))
+        with open(dest, "rb") as f:
+            self.assertEqual(f.read(), b"chunk1chunk2")
+        self.assertEqual(len(progress), 2)
+        shutil.rmtree(temp_dir)
+
+    def test_clipboard_osc52_fallback(self):
+        # Even without display, OSC 52 should write to stdout
+        with patch("sys.stdout.write") as mock_write, patch("sys.stdout.flush"):
+            res = ui.copy_to_clipboard("test_command")
+            self.assertTrue(res)
+            self.assertTrue(mock_write.called)
+
+    def test_hyperlink_osc8(self):
+        hl = ui.hyperlink("https://cyberium.academy", "Cyberium")
+        self.assertIn("\033]8;;https://cyberium.academy\033\\Cyberium\033]8;;\033\\", hl)
+
+    def test_extract_and_format_question_urls(self):
+        sample = "Download the exploit from <url=http://10.10.10.1/tools/LinPEAS.zip> and analyze it."
+        urls = ui.extract_urls(sample)
+        self.assertEqual(urls, ["http://10.10.10.1/tools/LinPEAS.zip"])
+
+        formatted_no_ansi, urls2 = ui.format_question_text(sample, ansi=False)
+        self.assertEqual(urls2, ["http://10.10.10.1/tools/LinPEAS.zip"])
+        self.assertIn("[Link: LinPEAS.zip]", formatted_no_ansi)
+        self.assertNotIn("<url=", formatted_no_ansi)
+
+        formatted_ansi, _ = ui.format_question_text(sample, ansi=True)
+        self.assertIn("Link: LinPEAS.zip", formatted_ansi)
+
+    def test_clear_session(self):
+        cfg = {"cookies": {"connect.sid": "123", "cyb_rt": "456"}}
+        with patch("cyberium.config.save_config") as mock_save:
+            config.clear_session(cfg)
+            self.assertEqual(cfg["cookies"], {})
+            self.assertTrue(mock_save.called)
+
+    @patch("urllib.request.urlopen")
+    def test_client_logout(self, mock_urlopen):
+        mock_auth = MagicMock()
+        mock_auth.read.return_value = json.dumps({"accessToken": "tok"}).encode("utf-8")
+        mock_logout = MagicMock()
+        mock_logout.read.return_value = b"{}"
+        mock_urlopen.return_value.__enter__.side_effect = [mock_auth, mock_logout]
+
+        cfg = {"cookies": {"connect.sid": "sid", "cyb_rt": "rt"}}
+        client = api.CyberiumClient(cfg)
+        self.assertEqual(client.token, "tok")
+        client.logout()
+        self.assertIsNone(client.token)
+        self.assertEqual(client.cookies, {})
+
+    def test_cmd_logout(self):
+        mock_client = MagicMock()
+        cfg = {"cookies": {"cyb_rt": "rt"}}
+        with patch("cyberium.cli.clear_session") as mock_clear, patch("builtins.print") as mock_print:
+            cli.cmd_logout(mock_client, cfg)
+            self.assertTrue(mock_client.logout.called)
+            self.assertTrue(mock_clear.called)
+            self.assertTrue(mock_print.called)
+
+    def test_ensure_active_context_auto_discovery(self):
+        mock_client = MagicMock()
+        mock_client.get_programs.return_value = [
+            {"id": 1, "code": "NX201", "name": "Network Research", "completion_pct": 0},
+            {"id": 10, "code": "ZX310", "name": "Cyber Warfare", "completion_pct": 60}
+        ]
+        mock_client.get_modules.return_value = {
+            "modules": [
+                {"id": 81, "name": "Recon", "is_open": True, "lab_completed": True},
+                {"id": 88, "name": "Post (Linux)", "is_open": True, "lab_completed": False}
+            ]
+        }
+        empty_cfg = {"cookies": {"cyb_rt": "rt"}}
+        with patch("cyberium.cli.save_config") as mock_save:
+            prog_id, mod_id = cli.ensure_active_context(mock_client, empty_cfg)
+            self.assertEqual(prog_id, 10)
+            self.assertEqual(mod_id, 88)
+            self.assertEqual(empty_cfg["current_program_id"], 10)
+            self.assertEqual(empty_cfg["current_module_id"], 88)
+            self.assertTrue(mock_save.called)
 
 
 if __name__ == "__main__":
