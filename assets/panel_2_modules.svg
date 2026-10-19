@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 580" width="100%" height="100%">
+  <rect width="1050" height="580" rx="12" fill="#040609" />
+  <rect x="10" y="10" width="1030" height="560" rx="10" fill="none" stroke="#10b981" stroke-width="0.8" stroke-opacity="0.35" />
+
+  <g transform="translate(20, 22)">
+    <rect x="0" y="0" width="1010" height="38" rx="6" fill="#0e231c" stroke="#10b981" stroke-width="0.7" stroke-opacity="0.45" />
+    <text x="16" y="24" font-family="Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#34d399" letter-spacing="1.2">CLI COMMAND &amp; SYNTAX</text>
+    <text x="246" y="24" font-family="Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#34d399" letter-spacing="1.2">SUBSYSTEM</text>
+    <text x="446" y="24" font-family="Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#34d399" letter-spacing="1.2">UNDERLYING ENGINE</text>
+    <text x="700" y="24" font-family="Georgia, 'Times New Roman', serif" font-size="11.5" font-weight="700" fill="#34d399" letter-spacing="1.2">RUNTIME BEHAVIOR &amp; VALUE</text>
+  </g>
+
+  <g transform="translate(20, 68)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#080b11" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#10b981">cyberium tui</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Interactive Navigator</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">curses.wrapper · dual-pane</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Fullscreen keyboard dashboard (j/k, Tab, Enter)</text>
+  </g>
+
+  <g transform="translate(20, 110)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#06080d" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#56d364">cyberium submit &lt;flag&gt;</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Flag Evaluator</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">REST API POST · &lt;50ms</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Instant verification, auto-advances to next</text>
+  </g>
+
+  <g transform="translate(20, 152)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#080b11" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#38bdf8">cyberium switch &lt;id&gt;</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Context Switcher</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">Program &amp; module resolver</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Switches active track across 14 academy tracks</text>
+  </g>
+
+  <g transform="translate(20, 194)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#06080d" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#82b8f0">cyberium q [index]</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Question Reader</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">urllib.request · hint ladder</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Renders question text, choices, and hints</text>
+  </g>
+
+  <g transform="translate(20, 236)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#080b11" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#a855f7">cyberium book [-o|-d|-c]</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Cloud Textbook Stream</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">Cloudflare R2 presigned CDN</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Streams PDF pager (-o), caches (-d), copies URL (-c)</text>
+  </g>
+
+  <g transform="translate(20, 278)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#06080d" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#f59e0b">cyberium auth [--manual]</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Session Harvest</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">sqlite3 moz_cookies query</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Auto-discovers live browser session from SQLite</text>
+  </g>
+
+  <g transform="translate(20, 320)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#080b11" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#fbbf24">cyberium notes [idx] [txt]</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Student Scratchpad</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">atomic JSON write · notes</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Persists challenge notes and exploit payloads</text>
+  </g>
+
+  <g transform="translate(20, 362)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#06080d" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#79c0ff">cyberium ls [track]</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Syllabus Inspector</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">REST GET · JSON parser</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Displays module catalog and progress totals</text>
+  </g>
+
+  <g transform="translate(20, 404)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#080b11" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#d4a359">cyberium status</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Operator Summary</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">Cached state &amp; JWT check</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Prints active session, track, and solved flag count</text>
+  </g>
+
+  <g transform="translate(20, 446)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#06080d" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#c9654b">cyberium theme [palette]</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Colorway Customizer</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">ANSI 256 / SGR palettes</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">16 color themes: Tokyo Night, Nord, Dracula, Matrix</text>
+  </g>
+
+  <g transform="translate(20, 488)">
+    <rect x="0" y="0" width="1010" height="36" rx="5" fill="#080b11" />
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#7ee787">cyberium --test</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Stdlib Test Runner</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">unittest.defaultTestLoader</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Executes 37 standard library automated tests</text>
+  </g>
+</svg>

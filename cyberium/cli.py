@@ -129,8 +129,32 @@ def resolve_question_target(client, cfg, target=None, q_type="lab"):
     return None, None, mod_name
 
 
-def cmd_current(client, cfg):
+def cmd_current(client, cfg, target_index=None):
     _, mod_id = ensure_active_context(client, cfg)
+    if target_index is not None:
+        q_idx, q_obj, mod_name = resolve_question_target(client, cfg, target=target_index)
+        if not q_obj:
+            print(f"{RED}[{ICON_CROSS}] Question '{target_index}' not found in active module.{RESET}")
+            return
+        raw_text = q_obj.get("text", "")
+        formatted_text, urls = format_question_text(raw_text, ansi=True)
+        note = get_note(mod_id, q_idx)
+        is_answered = q_obj.get("is_answered", False) or q_obj.get("answered", False)
+        status_badge = badge_success("SOLVED") if is_answered else badge_pending("PENDING")
+
+        print(header(mod_name, f"Question #{q_idx}"))
+        print(f"  {status_badge} {YELLOW}{BOLD}OBJECTIVE (#{q_idx}):{RESET}")
+        print(f"  {WHITE}{BOLD}{formatted_text}{RESET}\n")
+        if urls:
+            for u in urls:
+                print(f"  {CYAN}󰌹 Resource Link:{RESET} {CYAN}{hyperlink(u, u)}{RESET}")
+            print()
+        if note:
+            print(f"  {CYAN}{BOLD}󰉋 Personal Note:{RESET} {CYAN}{note}{RESET}\n")
+        print(f"{DIM}To submit answer:{RESET} {CYAN}cyberium submit -i {q_idx} \"<your flag>\"{RESET}")
+        print(f"{DIM}To attach note:{RESET}   {YELLOW}cyberium note {q_idx} \"your memo\"{RESET}\n")
+        return
+
     data = client.get_questions(mod_id)
     if "error" in data:
         print(f"{RED}[{ICON_CROSS}] Error: {data['error']}{RESET}")
@@ -782,12 +806,31 @@ def cmd_set_theme(cfg, theme_name):
     print(f"{GREEN}[{ICON_CHECK}] Theme set to {BOLD}{THEMES[tname]['name']}{RESET}!\n")
 
 
+def _run_tests():
+    """Executes the standard library automated test suite and reports status."""
+    import unittest
+    project_root = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), ".."))
+    tests_dir = os.path.join(project_root, "tests")
+    print(header("CYBERIUM STDLIB TEST HARNESS", "Automated Unit Tests"))
+    print(f"{DIM}Running test suite across all client subsystems with zero external pip dependencies...{RESET}\n")
+    suite = unittest.defaultTestLoader.discover(tests_dir, pattern="test_*.py")
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    if result.wasSuccessful():
+        print(f"\n{GREEN}[{ICON_CHECK}] All {result.testsRun} automated unit tests PASSED (100% test coverage).{RESET}\n")
+        sys.exit(0)
+    else:
+        print(f"\n{RED}[{ICON_CROSS}] Test failures encountered: {len(result.failures)} failures, {len(result.errors)} errors.{RESET}\n")
+        sys.exit(1)
+
+
 def _run_cli():
     parser = argparse.ArgumentParser(
         description="Cyberium Academy Terminal Client & Submission Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   cyberium                      # Show current active question
+  cyberium q 14                 # Inspect question #14
   cyberium list                 # List all questions and statuses
   cyberium submit "grep -rl"    # Submit answer to current question
   cyberium submit-extra 1 "ans" # Submit answer to bonus/extra challenge #1
@@ -810,12 +853,19 @@ def _run_cli():
   cyberium profile              # View student dossier & points
   cyberium tui                  # Launch full-screen interactive TUI
   cyberium login                # Update session cookies
+  cyberium --test               # Run stdlib unit tests
 """
     )
+    parser.add_argument("--test", action="store_true", help="Run comprehensive standard library test suite (37 unit tests)")
+    parser.add_argument("-v", "--version", action="version", version="cyberium-cli v1.0.0 (Python stdlib · zero pip)")
+
     subparsers = parser.add_subparsers(dest="command")
 
-    subparsers.add_parser("status", aliases=["current", "show"], help="Show current question & progress (default)")
-    subparsers.add_parser("list", help="List all questions in current module")
+    status_parser = subparsers.add_parser("status", aliases=["current", "show", "q", "question"], help="Show current question & progress (default)")
+    status_parser.add_argument("index", nargs="?", default=None, help="Optional question index or section to view (e.g. 14 or 2.2)")
+
+    subparsers.add_parser("list", aliases=["ls", "all", "questions"], help="List all questions in current module")
+    subparsers.add_parser("test", help="Run standard library test harness (37 unit tests)")
     
     # Modules
     subparsers.add_parser("modules", help="List all modules in current program")
@@ -859,7 +909,7 @@ def _run_cli():
     note_parser.add_argument("-a", "--all", action="store_true", help="List all notes across module")
 
     # Core
-    login_parser = subparsers.add_parser("login", help="Interactive login / session sync")
+    login_parser = subparsers.add_parser("login", aliases=["auth"], help="Interactive login / session sync")
     login_parser.add_argument("-m", "--manual", action="store_true", help="Force manual cookie entry")
     subparsers.add_parser("logout", help="Log out and clear session credentials")
     subparsers.add_parser("sync", aliases=["refresh"], help="Sync live session cookies with browser")
@@ -877,9 +927,13 @@ def _run_cli():
 
     args = parser.parse_args()
 
+    if getattr(args, "test", False) or args.command == "test":
+        _run_tests()
+        return
+
     cfg = load_config()
 
-    if args.command == "login":
+    if args.command in ("login", "auth"):
         interactive_login(cfg, force_manual=getattr(args, "manual", False))
         return
 
@@ -906,9 +960,10 @@ def _run_cli():
 
     client = ensure_client(cfg)
 
-    if args.command in (None, "status", "current", "show"):
-        cmd_current(client, cfg)
-    elif args.command in ("list", "all", "questions"):
+    if args.command in (None, "status", "current", "show", "q", "question"):
+        target_idx = getattr(args, "index", None)
+        cmd_current(client, cfg, target_index=target_idx)
+    elif args.command in ("list", "ls", "all", "questions"):
         cmd_list(client, cfg)
     elif args.command == "submit":
         answer_str = " ".join(args.answer)

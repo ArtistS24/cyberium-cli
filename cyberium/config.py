@@ -22,13 +22,29 @@ BOOKS_DIR = os.path.join(CACHE_DIR, "books")
 
 
 def _atomic_json_write(filepath, data):
-    """Safely and atomically writes JSON to disk to avoid corruption."""
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    temp_dir = os.path.dirname(filepath)
-    with tempfile.NamedTemporaryFile("w", dir=temp_dir, delete=False) as tf:
+    """Safely and atomically writes JSON to disk to avoid corruption with strict POSIX permissions."""
+    target_dir = os.path.dirname(filepath)
+    os.makedirs(target_dir, mode=0o700, exist_ok=True)
+    try:
+        os.chmod(target_dir, 0o700)
+    except Exception:
+        pass
+
+    with tempfile.NamedTemporaryFile("w", dir=target_dir, delete=False) as tf:
         json.dump(data, tf, indent=2)
         temp_name = tf.name
+
+    try:
+        os.chmod(temp_name, 0o600)
+    except Exception:
+        pass
+
     os.replace(temp_name, filepath)
+
+    try:
+        os.chmod(filepath, 0o600)
+    except Exception:
+        pass
 
 
 def find_browser_cyberium_cookies():

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 380" width="100%" height="100%">
+  <rect width="1050" height="380" rx="12" fill="#040609" />
+  <rect x="10" y="10" width="1030" height="360" rx="10" fill="none" stroke="#10b981" stroke-width="0.8" stroke-opacity="0.35" />
+
+  <g transform="translate(26, 26)">
+    <rect x="0" y="0" width="484" height="100" rx="7" fill="#080b11" stroke="#222c3c" stroke-width="1.1" />
+    <line x1="0" y1="12" x2="0" y2="88" stroke="#38bdf8" stroke-width="3.5" />
+    <text x="18" y="25" font-family="Georgia, 'Times New Roman', serif" font-size="14.2" font-weight="700" fill="#f4efe6" letter-spacing="0.8">Zero-Pip Python 3 Stdlib Architecture</text>
+    <text x="468" y="24" text-anchor="end" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.5" fill="#38bdf8">stdlib · urllib · curses</text>
+    <text x="18" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">Constructed entirely from the Python 3 standard library with zero external pip</text>
+    <text x="18" y="67" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">dependencies. Runs out-of-the-box in air-gapped Kali Linux containers,</text>
+    <text x="18" y="86" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#79c0ff">minimal Fedora installations, and headless SSH jump hosts with 0 overhead.</text>
+  </g>
+
+  <g transform="translate(540, 26)">
+    <rect x="0" y="0" width="484" height="100" rx="7" fill="#080b11" stroke="#222c3c" stroke-width="1.1" />
+    <line x1="0" y1="12" x2="0" y2="88" stroke="#10b981" stroke-width="3.5" />
+    <text x="18" y="25" font-family="Georgia, 'Times New Roman', serif" font-size="14.2" font-weight="700" fill="#f4efe6" letter-spacing="0.8">Automated Browser Session Discovery</text>
+    <text x="468" y="24" text-anchor="end" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.5" fill="#10b981">sqlite3 · cookie harvest</text>
+    <text x="18" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">Discovers live Cyberium session tokens across 12+ Linux browsers (Firefox,</text>
+    <text x="18" y="67" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">LibreWolf, Zen, Chrome, Brave, Flatpak/Snap) by querying moz_cookies SQLite.</text>
+    <text x="18" y="86" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#7ee787">Eliminates cleartext password entry via secure local JWT refresh token sync.</text>
+  </g>
+
+  <g transform="translate(26, 138)">
+    <rect x="0" y="0" width="484" height="100" rx="7" fill="#080b11" stroke="#222c3c" stroke-width="1.1" />
+    <line x1="0" y1="12" x2="0" y2="88" stroke="#d4a359" stroke-width="3.5" />
+    <text x="18" y="25" font-family="Georgia, 'Times New Roman', serif" font-size="14.2" font-weight="700" fill="#f4efe6" letter-spacing="0.8">Interactive Dual-Pane Curses TUI</text>
+    <text x="468" y="24" text-anchor="end" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.5" fill="#d4a359">cyberium-tui · curses</text>
+    <text x="18" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">Full-screen terminal navigator featuring dual-pane track inspection, status</text>
+    <text x="18" y="67" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">badges, inline hint reveals, fast keyboard navigation (j/k, Tab, Enter),</text>
+    <text x="18" y="86" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#f0c882">and modal question reader dialogs for seamless challenge solving.</text>
+  </g>
+
+  <g transform="translate(540, 138)">
+    <rect x="0" y="0" width="484" height="100" rx="7" fill="#080b11" stroke="#222c3c" stroke-width="1.1" />
+    <line x1="0" y1="12" x2="0" y2="88" stroke="#a855f7" stroke-width="3.5" />
+    <text x="18" y="25" font-family="Georgia, 'Times New Roman', serif" font-size="14.2" font-weight="700" fill="#f4efe6" letter-spacing="0.8">Cloudflare R2 Syllabus Streaming Engine</text>
+    <text x="468" y="24" text-anchor="end" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.5" fill="#a855f7">book · r2 presigned cdn</text>
+    <text x="18" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">Streams official academy textbooks directly to terminal pagers via signed R2</text>
+    <text x="18" y="67" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">Cloudflare URLs. Supports in-terminal reading (-o), local caching (-d), and</text>
+    <text x="18" y="86" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#d2a8ff">clipboard URL extraction (-c) with smart track-to-syllabus resolution.</text>
+  </g>
+
+  <g transform="translate(26, 250)">
+    <rect x="0" y="0" width="484" height="100" rx="7" fill="#080b11" stroke="#222c3c" stroke-width="1.1" />
+    <line x1="0" y1="12" x2="0" y2="88" stroke="#56d364" stroke-width="3.5" />
+    <text x="18" y="25" font-family="Georgia, 'Times New Roman', serif" font-size="14.2" font-weight="700" fill="#f4efe6" letter-spacing="0.8">Sub-Second Flag Verification (&lt; 50ms)</text>
+    <text x="468" y="24" text-anchor="end" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.5" fill="#56d364">submit · rest api</text>
+    <text x="18" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">Headless CLI submission engine evaluating question flags across 14 academy</text>
+    <text x="18" y="67" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">tracks. Features automatic question pointer advancing, instant green/red</text>
+    <text x="18" y="86" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#7ee787">visual validation, and sub-50ms API request latency from terminal.</text>
+  </g>
+
+  <g transform="translate(540, 250)">
+    <rect x="0" y="0" width="484" height="100" rx="7" fill="#080b11" stroke="#222c3c" stroke-width="1.1" />
+    <line x1="0" y1="12" x2="0" y2="88" stroke="#fbbf24" stroke-width="3.5" />
+    <text x="18" y="25" font-family="Georgia, 'Times New Roman', serif" font-size="14.2" font-weight="700" fill="#f4efe6" letter-spacing="0.8">Atomic Scratchpad Persistence &amp; Notes</text>
+    <text x="468" y="24" text-anchor="end" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.5" fill="#fbbf24">notes.json · atomic</text>
+    <text x="18" y="48" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">Preserves student scratchpad memos and observations mapped per-question</text>
+    <text x="18" y="67" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="11.8" fill="#9da9bb">in ~/.config/cyberium/notes.json. Utilizes atomic tempfile swaps to</text>
+    <text x="18" y="86" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#f0c882">guarantee zero data loss even if terminal sessions terminate unexpectedly.</text>
+  </g>
+</svg>

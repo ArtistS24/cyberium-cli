@@ -247,20 +247,20 @@ def divider():
     return f"{DIM}{'─' * 74}{RESET}"
 
 
-def badge_success(text):
-    return f"{GREEN}[{ICON_CHECK}] {text}{RESET}"
+def badge_success(text=""):
+    return f"{GREEN}[{ICON_CHECK}]{' ' + text if text else ''}{RESET}"
 
 
-def badge_pending(text):
-    return f"{YELLOW}{BOLD}[{ICON_PENDING}] {text}{RESET}"
+def badge_pending(text=""):
+    return f"{YELLOW}{BOLD}[{ICON_PENDING}]{' ' + text if text else ''}{RESET}"
 
 
-def badge_failed(text):
-    return f"{RED}{BOLD}[{ICON_CROSS}] {text}{RESET}"
+def badge_failed(text=""):
+    return f"{RED}{BOLD}[{ICON_CROSS}]{' ' + text if text else ''}{RESET}"
 
 
-def badge_empty(text):
-    return f"{DIM}[ ] {text}{RESET}"
+def badge_empty(text=""):
+    return f"{DIM}[ ]{' ' + text if text else ''}{RESET}"
 
 
 def progress_bar(current, total, width=20):
