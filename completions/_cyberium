@@ -5,7 +5,11 @@ _cyberium() {
     commands=(
         'status:Show current active question and progress'
         'current:Show current active question and progress'
+        'show:Show current active question and progress'
+        'q:Quick inspect question by index or show active objective'
+        'question:Quick inspect question by index'
         'list:List all questions in current module'
+        'ls:List all questions in current module'
         'submit:Submit answer to current question'
         'submit-extra:Submit answer to bonus/extra challenge'
         'modules:List all modules in current program'
@@ -28,9 +32,13 @@ _cyberium() {
         'logout:Log out and clear session credentials'
         'tui:Launch interactive full-screen TUI dashboard'
         'login:Interactive login / session sync'
+        'auth:Interactive login / session sync'
+        'test:Run standard library automated test harness'
     )
 
     _arguments -C \
+        '(-v --version)'{-v,--version}'[Show version and stdlib runtime]' \
+        '--test[Run automated unit tests with zero external dependencies]' \
         '1: :->command' \
         '*: :->args'
 

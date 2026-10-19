@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <defs>
+    <linearGradient id="bg-grad-cyberium" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e17" />
+      <stop offset="100%" stop-color="#04060a" />
+    </linearGradient>
+  </defs>
+
+  
+  <rect width="1280" height="640" fill="url(#bg-grad-cyberium)" />
+
+  
+  <rect x="30" y="30" width="1220" height="580" rx="12" fill="none" stroke="#30363d" stroke-width="1.5" />
+  <rect x="30" y="30" width="1220" height="580" rx="12" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-opacity="0.35" />
+
+  
+  <g transform="translate(55, 65)">
+    <circle cx="0" cy="0" r="6" fill="#ff5f56" />
+    <circle cx="20" cy="0" r="6" fill="#ffbd2e" />
+    <circle cx="40" cy="0" r="6" fill="#27c93f" />
+    <text x="65" y="4" font-family="monospace" font-size="14" font-weight="600" fill="#64748b">artist@box:~ · DENIS ALBIN // CAPSTONE RESEARCH SUITE</text>
+  </g>
+
+  
+  <line x1="55" y1="90" x2="1225" y2="90" stroke="#1e293b" stroke-width="1" />
+
+  
+  <g transform="translate(55, 130)">
+    <rect x="0" y="0" width="280" height="32" rx="6" fill="#0c4a6e" fill-opacity="0.6" stroke="#38bdf8" stroke-width="1.2" />
+    <text x="16" y="21" font-family="monospace" font-size="13" font-weight="700" fill="#38bdf8" letter-spacing="1.5">[ OFFENSIVE LEARNING SUITE ]</text>
+  </g>
+
+  
+  <text x="55" y="225" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="48" font-weight="800" fill="#f8fafc" letter-spacing="-0.5">Cyberium CLI and TUI</text>
+
+  
+  <text x="55" y="275" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" font-size="22" font-weight="500" fill="#94a3b8">Pure Python Standard-Library Client and Curses TUI</text>
+
+  
+  <g transform="translate(55, 335)">
+    
+    <rect x="0" y="0" width="180" height="38" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="16" y="24" font-family="monospace" font-size="14" font-weight="600" fill="#e2e8f0">Python 3 Stdlib</text>
+
+    
+    <rect x="195" y="0" width="180" height="38" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="211" y="24" font-family="monospace" font-size="14" font-weight="600" fill="#e2e8f0">Curses TUI</text>
+
+    
+    <rect x="390" y="0" width="200" height="38" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="406" y="24" font-family="monospace" font-size="14" font-weight="600" fill="#e2e8f0">Zero External Pip</text>
+
+    
+    <rect x="605" y="0" width="240" height="38" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1" />
+    <text x="621" y="24" font-family="monospace" font-size="14" font-weight="600" fill="#38bdf8">34 Automated Tests</text>
+  </g>
+
+  
+  <g transform="translate(55, 410)">
+    <rect x="0" y="0" width="860" height="125" rx="8" fill="#090d16" stroke="#1e293b" stroke-width="1" />
+    <text x="20" y="35" font-family="monospace" font-size="14" fill="#38bdf8">$ git clone https://github.com/ArtistS24/cyberium-cli.git</text>
+    <text x="20" y="65" font-family="monospace" font-size="14" fill="#94a3b8">[✓] Verified Capstone Architecture · Complete Photographic Evidence Dossier</text>
+    <text x="20" y="95" font-family="monospace" font-size="14" fill="#38bdf8">[*] Official PDF Research Dossier &amp; Whitepaper Included in docs/</text>
+  </g>
+
+  
+  <g transform="translate(960, 160)">
+    <circle cx="140" cy="140" r="110" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-opacity="0.2" />
+    <circle cx="140" cy="140" r="85" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="6,6" stroke-opacity="0.4" />
+    <circle cx="140" cy="140" r="60" fill="#0c4a6e" fill-opacity="0.3" stroke="#38bdf8" stroke-width="2" />
+    
+    <line x1="140" y1="15" x2="140" y2="265" stroke="#38bdf8" stroke-width="1" stroke-opacity="0.3" />
+    <line x1="15" y1="140" x2="265" y2="140" stroke="#38bdf8" stroke-width="1" stroke-opacity="0.3" />
+    
+    <text x="140" y="146" font-family="monospace" font-size="20" font-weight="800" fill="#38bdf8" text-anchor="middle">S24</text>
+  </g>
+
+  
+  <text x="55" y="575" font-family="monospace" font-size="14" font-weight="600" fill="#64748b">DENIS ALBIN · GITHUB: @ArtistS24 · CITY &amp; GUILDS ACCREDITED</text>
+</svg>

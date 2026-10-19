@@ -111,6 +111,16 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(parsed.get("CONNECT_SID"), "secret_val")
         self.assertEqual(parsed.get("CYB_RT"), "token123")
 
+    def test_atomic_json_write_permissions(self):
+        filepath = os.path.join(self.temp_dir, "secure_subdir", "test.json")
+        config._atomic_json_write(filepath, {"secure": True})
+        self.assertTrue(os.path.exists(filepath))
+        if os.name == "posix":
+            dir_mode = oct(os.stat(os.path.dirname(filepath)).st_mode & 0o777)
+            file_mode = oct(os.stat(filepath).st_mode & 0o777)
+            self.assertEqual(dir_mode, "0o700")
+            self.assertEqual(file_mode, "0o600")
+
 
 class TestUI(unittest.TestCase):
     def test_all_16_themes_validity(self):
@@ -282,6 +292,20 @@ class TestCLI(unittest.TestCase):
         with patch("builtins.print") as mock_print:
             cli.cmd_current(self.mock_client, self.cfg)
             self.assertTrue(mock_print.called)
+
+    def test_cmd_current_specific_index(self):
+        self.mock_client.get_questions.return_value = {
+            "module_name": "Post (Linux)",
+            "total": 83,
+            "questions": [
+                {"index": 14, "text": "2.2. Exfiltrate passwd <url=http://example.com/exploit>", "is_answered": True}
+            ]
+        }
+        with patch("cyberium.cli.get_note", return_value="my custom memo"), patch("builtins.print") as mock_print:
+            cli.cmd_current(self.mock_client, self.cfg, target_index=14)
+            printed_content = " ".join(call.args[0] for call in mock_print.call_args_list if call.args)
+            self.assertIn("Question #14", printed_content)
+            self.assertIn("my custom memo", printed_content)
 
     def test_cmd_set_program(self):
         self.mock_client.get_programs.return_value = [
@@ -484,6 +508,16 @@ class TestNewFeatures(unittest.TestCase):
             self.assertEqual(empty_cfg["current_program_id"], 10)
             self.assertEqual(empty_cfg["current_module_id"], 88)
             self.assertTrue(mock_save.called)
+
+    def test_run_tests_harness(self):
+        with patch("unittest.TextTestRunner") as mock_runner, patch("sys.exit") as mock_exit:
+            mock_res = MagicMock()
+            mock_res.wasSuccessful.return_value = True
+            mock_res.testsRun = 37
+            mock_runner.return_value.run.return_value = mock_res
+            with patch("builtins.print"):
+                cli._run_tests()
+            mock_exit.assert_called_with(0)
 
 
 if __name__ == "__main__":

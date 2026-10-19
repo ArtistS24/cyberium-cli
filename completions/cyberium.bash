@@ -7,7 +7,8 @@ _cyberium_completion() {
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
-    commands="status current show list submit submit-extra modules set-module programs switch set-program extra themes set-theme theme profile stats banner book video note notes search sync refresh logout login tui"
+    commands="status current show q question list ls all questions submit submit-extra modules set-module programs switch set-program extra themes set-theme theme profile stats banner book video note notes search sync refresh logout login auth test tui"
+    opts="--help -h --version -v --test"
 
     case "${prev}" in
         switch|set-program|program|track)
@@ -40,7 +41,7 @@ _cyberium_completion() {
             COMPREPLY=( $(compgen -W "${note_opts}" -- "${cur}") )
             return 0
             ;;
-        login)
+        login|auth)
             local login_opts="-m --manual"
             COMPREPLY=( $(compgen -W "${login_opts}" -- "${cur}") )
             return 0
@@ -48,7 +49,11 @@ _cyberium_completion() {
     esac
 
     if [[ ${COMP_CWORD} -eq 1 ]]; then
-        COMPREPLY=( $(compgen -W "${commands}" -- "${cur}") )
+        if [[ "${cur}" == -* ]]; then
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+        else
+            COMPREPLY=( $(compgen -W "${commands} ${opts}" -- "${cur}") )
+        fi
         return 0
     fi
 }

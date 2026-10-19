@@ -1,115 +1,82 @@
-# Cyberium CLI & TUI Suite
+<p align="center">
+  <img src="assets/hero_banner.svg" width="100%" alt="Cyberium CLI — Pure Python 3 Stdlib Headless Cybersecurity Learning Platform Client &amp; Curses TUI" />
+</p>
 
-Lightweight terminal client, live submission engine, and interactive TUI dashboard for **Cyberium Academy** (`https://cyberium.academy`).
+<p align="center">
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Language-Python_3_Stdlib-38bdf8?style=for-the-badge&amp;logo=python&amp;logoColor=white&amp;labelColor=06090e" alt="Language" /></a>
+  <a href="cyberium/tui.py"><img src="https://img.shields.io/badge/Interface-Curses_TUI_%2B_CLI-10b981?style=for-the-badge&amp;logo=gnubash&amp;logoColor=white&amp;labelColor=06090e" alt="Interface" /></a>
+  <a href="cyberium/config.py"><img src="https://img.shields.io/badge/Auth_Sync-SQLite_Cookie_Harvest-d4a359?style=for-the-badge&amp;logo=sqlite&amp;logoColor=white&amp;labelColor=06090e" alt="Auth Engine" /></a>
+  <a href="docs/Cyberium_CLI_POC_Denis_Albin.pdf"><img src="https://img.shields.io/badge/Capstone_Dossier-PDF_(8_Pages)-56d364?style=for-the-badge&amp;logo=readthedocs&amp;logoColor=white&amp;labelColor=06090e" alt="Capstone Dossier" /></a>
+</p>
 
-Work through hands-on labs, track objective progress, take notes, view course books/videos, and submit answers directly from your Linux terminal without switching back and forth to your web browser.
+<p align="center">
+  <img src="assets/pipeline.svg" width="100%" alt="Cyberium CLI Four-Stage Platform Client Architecture" />
+</p>
 
----
+<p align="center">
+  <img src="assets/sec_1_capabilities.svg" width="100%" alt="I · Architectural Capabilities &amp; Core" />
+  <img src="assets/panel_1_capabilities.svg" width="100%" alt="Cyberium CLI Core Architectural Capabilities" />
+</p>
 
-## Features
+<p align="center">
+  <img src="assets/sec_2_modules.svg" width="100%" alt="II · Command Dispatch Matrix &amp; TUI Controls" />
+  <img src="assets/panel_2_modules.svg" width="100%" alt="Cyberium CLI Command Dispatch Matrix &amp; TUI Controls" />
+</p>
 
-- **Automated Session Discovery:** Auto-detects and syncs active session cookies directly from your local Firefox browser.
-- **Interactive TUI Dashboard:** Full-screen ncurses dashboard (`cyberium tui` or `cyberium-tui`) with mouse support, search, scratchpad notes, themes, and instant modal book/video access.
-- **Course PDF Books:** Instant viewing (`-o`), downloading (`-d`), or link copying (`-c`) for course textbooks via Cloudflare R2 CDN.
-- **HD Video Lectures:** Watch streaming lectures directly in browser (`-o`) or copy links (`-c`).
-- **Instant Live Submissions:** Submit answers directly from the shell (`cyberium submit "<answer>"` or `cyberium submit -i 14 "<answer>"`).
-- **Multi-Track & Module Navigation:** Effortlessly browse and switch between all 14 training tracks (`ZX310 Cyber Warfare`, `ZX301 Penetration Testing`, `NX201 Network Research`, etc.).
-- **Student Scratchpad Notes:** Attach personal notes and memos to any lab question (`cyberium note "memo"`).
-- **16 Terminal Themes:** Custom color palettes (Cyberium, Dracula, Tokyo Night, Catppuccin, Nord, Matrix, Gruvbox, etc.).
-- **Zero Heavy Dependencies:** Built on pure Python 3 standard libraries—zero external pip dependencies required.
-- **Strict Terminal Formatting:** Pure ANSI terminal glyphs with zero emojis, high-contrast badges, and distraction-free layout.
+<p align="center">
+  <img src="assets/sec_3_walkthrough.svg" width="100%" alt="III · Capstone Evidence &amp; POC Gallery" />
+  <a href="docs/Cyberium_CLI_POC_Denis_Albin.pdf" title="Open Cyberium CLI Official Capstone Dossier (8-Page PDF)"><img src="assets/evidence/poc_plate_1_auth_and_tui.png" width="100%" alt="Cyberium CLI Execution Evidence Plate I — Browser Session Harvest, Full-Screen Curses TUI Navigator &amp; Sub-Second Flag Solve (Cyberium_CLI_POC_Denis_Albin.pdf Figures 1, 5, 6)" /></a>
+  <a href="docs/Cyberium_CLI_POC_Denis_Albin.pdf" title="Open Cyberium CLI Official Capstone Dossier (8-Page PDF)"><img src="assets/evidence/poc_plate_2_cli_streaming_and_notes.png" width="100%" alt="Cyberium CLI Execution Evidence Plate II — POSIX Command Tree, Cloudflare R2 Textbook Streaming, Live Metasploitable 2 Recon &amp; Scratchpad Notes (Cyberium_CLI_POC_Denis_Albin.pdf Figures 2, 3, 4, 7)" /></a>
+</p>
 
----
-
-## Installation
-
-### Direct Install (Recommended)
+<p align="center">
+  <img src="assets/sec_4_execution.svg" width="100%" alt="IV · Deployment, Runtime &amp; Persistence" />
+</p>
 
 ```bash
-cd ~/Projects/cyberium-cli
+git clone https://github.com/ArtistS24/cyberium-cli.git
+cd cyberium-cli
+
+# Run zero-dependency automated installer (links binary to ~/.local/bin/cyberium)
 ./install.sh
+
+# Verify comprehensive standard-library test suite (37 automated unit tests)
+python3 -m unittest discover tests
+
+# Launch full-screen interactive curses TUI dashboard
+cyberium tui
 ```
 
-Installs `cyberium` and `cyberium-tui` to `~/.local/bin/` with bash and zsh tab-completion scripts.
+<p align="center">
+  <img src="assets/panel_3_workspace.svg" width="100%" alt="Client Config, Cache Persistence &amp; Stdlib Test Harness Matrix" />
+</p>
 
----
+```toml
+[instant_lab_submission]
+# Submit active lab objective flag directly from CLI without launching TUI
+command = "cyberium submit 'FLAG{memory_carved_vad_svchost}'"
 
-## Authentication & Initial Setup
-
-Cyberium CLI auto-detects and syncs your active session cookies from Firefox automatically!
-
-If you ever need to manually refresh or link your session:
-
-```bash
-cyberium sync          # Auto-sync live cookies from Firefox
-cyberium login         # Interactive login prompt (with auto-detect option)
+# Submit specific question index across any enrolled track
+target  = "cyberium submit -i 14 'FLAG{auditd_rule_triggered}'"
 ```
 
-Credentials are saved locally and securely to `~/.config/cyberium/config.json`. The client automatically handles JWT access token refreshing in the background.
+<p align="center">
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Runtime-Python_3.8%2B_Stdlib-0d131c?style=flat-square&amp;logo=python&amp;logoColor=38bdf8&amp;labelColor=06090e" alt="Python" /></a>
+  <a href="https://docs.python.org/3/library/curses.html"><img src="https://img.shields.io/badge/Interface-POSIX_Curses-0d131c?style=flat-square&amp;logo=gnubash&amp;logoColor=10b981&amp;labelColor=06090e" alt="Curses" /></a>
+  <a href="https://sqlite.org/"><img src="https://img.shields.io/badge/Session_Sync-SQLite3-0d131c?style=flat-square&amp;logo=sqlite&amp;logoColor=d4a359&amp;labelColor=06090e" alt="SQLite" /></a>
+  <a href="https://www.cloudflare.com/"><img src="https://img.shields.io/badge/Delivery-Cloudflare_R2-0d131c?style=flat-square&amp;logo=cloudflare&amp;logoColor=f59e0b&amp;labelColor=06090e" alt="Cloudflare" /></a>
+  <a href="https://www.mozilla.org/firefox/"><img src="https://img.shields.io/badge/Browser_Jar-Gecko_moz__cookies-0d131c?style=flat-square&amp;logo=firefox&amp;logoColor=ff7139&amp;labelColor=06090e" alt="Mozilla" /></a>
+</p>
 
----
+```toml
+[academic_attribution]
+engineer    = "Denis Albin"
+handle      = "@ArtistS24"
+role        = "Security Researcher & Tooling Engineer"
+institution = "John Bryce Academy // Division RTX2026"
+status      = "Officially Submitted Capstone Research Project"
+dossier     = "docs/Cyberium_CLI_POC_Denis_Albin.pdf (8 Pages, 2.8 MB)"
 
-## Command Reference
-
-| Command | Description |
-|---|---|
-| `cyberium` | Displays the active lab question and module progress. |
-| `cyberium list` | Lists all questions in current module with `[✓]` solved / `[]` active badges. |
-| `cyberium submit "<ans>"` | Submits your answer to the active question with instant platform feedback. |
-| `cyberium submit -i <num> "<ans>"` | Submits an answer to a specific question number or section (e.g. `2.2`). |
-| `cyberium submit-extra <num> "<ans>"` | Submits an answer to a bonus/extra challenge. |
-| `cyberium modules` | Lists all modules in your active program with completion stats. |
-| `cyberium set-module [ID]` | Switches active module (interactive selector if ID omitted). |
-| `cyberium programs` | Lists all 14 enrolled training tracks (e.g., `ZX310`, `ZX301`, `NX201`). |
-| `cyberium switch [CODE/ID]` | Switches active training track (e.g., `cyberium switch ZX301`). |
-| `cyberium book` | Displays course PDF textbook link and details. |
-| `cyberium book -o` | Opens course PDF directly in your default reader or browser. |
-| `cyberium book -d` | Downloads course PDF to `~/Downloads/` directly from Cloudflare R2 CDN. |
-| `cyberium book -c` | Copies direct PDF URL to clipboard. |
-| `cyberium video` | Displays HD video lecture streaming URL. |
-| `cyberium video -o` | Opens HD video lecture in browser. |
-| `cyberium note "memo"` | Saves a scratchpad note to the current active question. |
-| `cyberium note 2.2 "memo"` | Saves a scratchpad note to section `2.2` (Question #14). |
-| `cyberium note 2.2` | Displays the scratchpad note for section `2.2`. |
-| `cyberium notes` | Lists all saved scratchpad notes across the current module. |
-| `cyberium search "<term>"` | Searches question objectives in the active module by keyword. |
-| `cyberium extra` | Lists bonus / extra challenges for the active module. |
-| `cyberium themes` | Lists all 16 available terminal themes. |
-| `cyberium set-theme <name>` | Switches active theme (e.g., `cyberium set-theme matrix`). |
-| `cyberium profile` | Displays student dossier, rank, and training points. |
-| `cyberium stats` | Displays full operator dashboard with PBR metrics and trophies. |
-| `cyberium sync` | Synchronizes live session cookies from Firefox. |
-| `cyberium logout` | Logs out of Cyberium Academy and clears saved session cookies. |
-| `cyberium tui` | Launches full-screen interactive curses dashboard (`cyberium-tui`). |
-
----
-
-## Interactive TUI Hotkeys
-
-Launch with `cyberium tui` or `cyberium-tui`:
-
-| Hotkey | Action |
-|---|---|
-| `↑` / `↓` or `k` / `j` | Navigate question list |
-| `Enter` / `i` | Submit answer for selected objective |
-| `/` or `s` | Search / filter questions |
-| `l` | Attached Lab Resources modal (`[o]` Open, `[d]` Download, `[c]` Copy URL) |
-| `n` | Open student scratchpad note popup |
-| `m` | Browse and switch modules |
-| `P` | Browse and switch training programs/tracks |
-| `x` | Toggle between Core Labs and Bonus/Extra Challenges |
-| `b` | Course Book modal (`[o]` Open, `[d]` Download, `[c]` Copy link) |
-| `v` | HD Video Lecture modal (`[o]` Watch, `[c]` Copy link) |
-| `t` | Terminal theme selector (16 palettes) |
-| `p` | Student operator dossier popup |
-| `c` | Copy selected question text to clipboard |
-| `r` | Refresh platform data |
-| `L` | Confirmation popup to log out and clear session |
-| `q` / `Esc` | Quit TUI / Close popup |
-
----
-
-## License
-
-Developed by Denis Albin for Cyberium Academy Students & Instructors.
-
+[disclaimer]
+notice = "Unofficial open-source client developed independently for educational purposes. Not affiliated with, sponsored by, or endorsed by Cyberium Academy or John Bryce Academy. All trademarks belong to their respective owners."
+```

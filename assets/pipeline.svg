@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 216" width="100%" height="100%">
+  <defs>
+    <style>
+      .mono { font-family: ui-monospace, SFMono-Regular, 'JetBrains Mono', 'Fira Code', Menlo, monospace; }
+      .title { fill: #f8fafc; font-weight: 700; font-size: 13.5px; }
+      .sub { fill: #94a3b8; font-size: 11.0px; }
+      .badge { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; }
+      .step-num { font-size: 11.5px; font-weight: 800; letter-spacing: 1.2px; }
+    </style>
+  </defs>
+
+  <rect x="2" y="2" width="1046" height="212" rx="10" fill="#040609" stroke="#10b981" stroke-opacity="0.35" stroke-width="1.2" />
+
+  <g transform="translate(18, 22)">
+    <rect width="224" height="172" rx="7" fill="#0d1420" stroke="#1e293b" stroke-width="1.2" />
+    <rect width="224" height="30" rx="7" fill="#0f172a" />
+    <path d="M0 24 L224 24" stroke="#1e293b" stroke-width="1" />
+    <text x="14" y="19" fill="#38bdf8" class="mono step-num">01 · FRONTEND</text>
+    <circle cx="206" cy="15" r="4.5" fill="#38bdf8" />
+    
+    <text x="14" y="52" class="mono title">Curses &amp; CLI</text>
+    <text x="14" y="74" class="mono sub">• Fullscreen ncurses TUI</text>
+    <text x="14" y="94" class="mono sub">• Instant CLI runner</text>
+    <text x="14" y="114" class="mono sub">• 16 ANSI color themes</text>
+
+    <rect x="14" y="134" width="196" height="24" rx="4" fill="#0369a1" fill-opacity="0.2" stroke="#0284c7" stroke-width="0.8" />
+    <text x="112" y="150" fill="#38bdf8" class="mono badge" text-anchor="middle">PURE PYTHON STDLIB</text>
+  </g>
+
+  <path d="M250 108 L272 108" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="3,3" />
+  <polygon points="276,108 268,103 268,113" fill="#38bdf8" />
+
+  <g transform="translate(282, 22)">
+    <rect width="224" height="172" rx="7" fill="#0d1420" stroke="#1e293b" stroke-width="1.2" />
+    <rect width="224" height="30" rx="7" fill="#0f172a" />
+    <path d="M0 24 L224 24" stroke="#1e293b" stroke-width="1" />
+    <text x="14" y="19" fill="#10b981" class="mono step-num">02 · AUTH &amp; SYNC</text>
+    <circle cx="206" cy="15" r="4.5" fill="#10b981" />
+
+    <text x="14" y="52" class="mono title">Session Discovery</text>
+    <text x="14" y="74" class="mono sub">• Firefox cookie harvest</text>
+    <text x="14" y="94" class="mono sub">• SQLite jar extraction</text>
+    <text x="14" y="114" class="mono sub">• Background JWT refresh</text>
+
+    <rect x="14" y="134" width="196" height="24" rx="4" fill="#065f46" fill-opacity="0.2" stroke="#059669" stroke-width="0.8" />
+    <text x="112" y="150" fill="#34d399" class="mono badge" text-anchor="middle">ZERO MANUAL CREDENTIALS</text>
+  </g>
+
+  <path d="M514 108 L536 108" stroke="#10b981" stroke-width="1.8" stroke-dasharray="3,3" />
+  <polygon points="540,108 532,103 532,113" fill="#10b981" />
+
+  <g transform="translate(546, 22)">
+    <rect width="224" height="172" rx="7" fill="#0d1420" stroke="#1e293b" stroke-width="1.2" />
+    <rect width="224" height="30" rx="7" fill="#0f172a" />
+    <path d="M0 24 L224 24" stroke="#1e293b" stroke-width="1" />
+    <text x="14" y="19" fill="#fbbf24" class="mono step-num">03 · LAB ENGINE</text>
+    <circle cx="206" cy="15" r="4.5" fill="#fbbf24" />
+
+    <text x="14" y="52" class="mono title">Live Submissions</text>
+    <text x="14" y="74" class="mono sub">• Real-time lab grading</text>
+    <text x="14" y="94" class="mono sub">• Scratchpad note cache</text>
+    <text x="14" y="114" class="mono sub">• 14 Tracks (ZX310, ZX301)</text>
+
+    <rect x="14" y="134" width="196" height="24" rx="4" fill="#78350f" fill-opacity="0.2" stroke="#d97706" stroke-width="0.8" />
+    <text x="112" y="150" fill="#fbbf24" class="mono badge" text-anchor="middle">INSTANT EVALUATION</text>
+  </g>
+
+  <path d="M778 108 L800 108" stroke="#fbbf24" stroke-width="1.8" stroke-dasharray="3,3" />
+  <polygon points="804,108 796,103 796,113" fill="#fbbf24" />
+
+  <g transform="translate(810, 22)">
+    <rect width="222" height="172" rx="7" fill="#0d1420" stroke="#1e293b" stroke-width="1.2" />
+    <rect width="222" height="30" rx="7" fill="#0f172a" />
+    <path d="M0 24 L222 24" stroke="#1e293b" stroke-width="1" />
+    <text x="14" y="19" fill="#e879f9" class="mono step-num">04 · CLOUD CDN</text>
+    <circle cx="204" cy="15" r="4.5" fill="#e879f9" />
+
+    <text x="14" y="52" class="mono title">Cloudflare R2</text>
+    <text x="14" y="74" class="mono sub">• Presigned PDF streams</text>
+    <text x="14" y="94" class="mono sub">• HD video lecture links</text>
+    <text x="14" y="114" class="mono sub">• Zero browser friction</text>
+
+    <rect x="14" y="134" width="194" height="24" rx="4" fill="#701a75" fill-opacity="0.2" stroke="#c026d3" stroke-width="0.8" />
+    <text x="111" y="150" fill="#e879f9" class="mono badge" text-anchor="middle">EDGE DELIVERY</text>
+  </g>
+</svg>
