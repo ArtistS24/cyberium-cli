@@ -255,6 +255,7 @@ class TestAPI(unittest.TestCase):
         res = client.get_questions(88)
         self.assertIn("questions", res)
         self.assertEqual(client.token, "refreshed_tok")
+        err_401.close()
 
     @patch("urllib.request.urlopen")
     def test_network_offline_recovery(self, mock_urlopen):

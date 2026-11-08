@@ -864,7 +864,8 @@ def _run_cli():
     status_parser = subparsers.add_parser("status", aliases=["current", "show", "q", "question"], help="Show current question & progress (default)")
     status_parser.add_argument("index", nargs="?", default=None, help="Optional question index or section to view (e.g. 14 or 2.2)")
 
-    subparsers.add_parser("list", aliases=["ls", "all", "questions"], help="List all questions in current module")
+    list_parser = subparsers.add_parser("list", aliases=["ls", "all", "questions"], help="List all questions in current module")
+    list_parser.add_argument("track", nargs="?", default=None, help="Optional program/track ID or code to switch before listing")
     subparsers.add_parser("test", help="Run standard library test harness (37 unit tests)")
     
     # Modules
@@ -897,8 +898,8 @@ def _run_cli():
 
     # Themes
     subparsers.add_parser("themes", help="List all available terminal themes")
-    set_theme_parser = subparsers.add_parser("set-theme", aliases=["theme"], help="Set active terminal theme")
-    set_theme_parser.add_argument("name", help="Theme name (cyberium, catppuccin, matrix, nord, dracula, classic, etc.)")
+    set_theme_parser = subparsers.add_parser("set-theme", aliases=["theme"], help="Set or list active terminal theme")
+    set_theme_parser.add_argument("name", nargs="?", default=None, help="Theme name (cyberium, catppuccin, matrix, nord, dracula, classic, etc.)")
 
     # Search & Notes
     search_parser = subparsers.add_parser("search", help="Search questions by keyword")
@@ -955,7 +956,10 @@ def _run_cli():
         return
 
     if args.command in ("set-theme", "theme"):
-        cmd_set_theme(cfg, args.name)
+        if not args.name:
+            cmd_themes(cfg)
+        else:
+            cmd_set_theme(cfg, args.name)
         return
 
     client = ensure_client(cfg)
@@ -964,6 +968,8 @@ def _run_cli():
         target_idx = getattr(args, "index", None)
         cmd_current(client, cfg, target_index=target_idx)
     elif args.command in ("list", "ls", "all", "questions"):
+        if getattr(args, "track", None):
+            cmd_set_program(client, cfg, args.track)
         cmd_list(client, cfg)
     elif args.command == "submit":
         answer_str = " ".join(args.answer)
@@ -985,7 +991,7 @@ def _run_cli():
     elif args.command == "stats":
         cmd_stats(client, cfg)
     elif args.command in ("note", "notes"):
-        if getattr(args, "all", False) or args.command == "notes":
+        if getattr(args, "all", False) or (args.command == "notes" and not args.params):
             cmd_notes(client, cfg)
         else:
             cmd_note(client, cfg, args.params)
