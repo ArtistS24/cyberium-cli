@@ -7,21 +7,21 @@
     <rect x="1" y="1" width="486" height="34" rx="6" fill="#0d1f18" />
     <line x1="0" y1="35" x2="488" y2="35" stroke="#222c3c" stroke-width="1" />
     <line x1="0" y1="8" x2="0" y2="28" stroke="#10b981" stroke-width="3.5" />
-    <text x="16" y="23" font-family="Georgia, 'Times New Roman', serif" font-size="12.5" font-weight="700" fill="#34d399" letter-spacing="1.1">CLIENT CONFIG &amp; CACHE PERSISTENCE</text>
-    <text x="472" y="23" text-anchor="end" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#7d8a9e">[cyberium.config]</text>
+    <text x="16" y="23" font-family="Georgia, 'Times New Roman', serif" font-size="12.5" font-weight="700" fill="#34d399" letter-spacing="1.1">LOCAL CONFIG &amp; CACHE DIRECTORIES</text>
+    <text x="472" y="23" text-anchor="end" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#7d8a9e">[~/.config/cyberium]</text>
 
     <g font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.5" fill="#c9d1d9">
-      <text x="16" y="58" fill="#f0f6fc" font-weight="700">~/.config/cyberium/ (Per-User Directory)</text>
-      <text x="16" y="78" fill="#6e7681">├──</text> <text x="44" y="78" fill="#34d399" font-weight="700">config.json</text> <text x="148" y="78" fill="#8b949e">Session cookies (cyb_rt), active track</text>
-      <text x="16" y="98" fill="#6e7681">├──</text> <text x="44" y="98" fill="#fbbf24" font-weight="700">notes.json</text> <text x="148" y="98" fill="#8b949e">Per-question scratchpad memos</text>
-      <text x="16" y="118" fill="#6e7681">└──</text> <text x="44" y="118" fill="#82b8f0">session.lock</text> <text x="148" y="118" fill="#8b949e">PID lock preventing concurrent writes</text>
-      <text x="16" y="142" fill="#f0f6fc" font-weight="700">~/.cache/cyberium/ (Transient Data)</text>
-      <text x="16" y="162" fill="#6e7681">└──</text> <text x="44" y="162" fill="#a855f7" font-weight="700">books/</text> <text x="148" y="162" fill="#8b949e">Cached syllabus PDFs from Cloudflare R2</text>
+      <text x="16" y="58" fill="#f0f6fc" font-weight="700">~/.config/cyberium/ (User Settings &amp; Notes)</text>
+      <text x="16" y="78" fill="#6e7681">├──</text> <text x="44" y="78" fill="#34d399" font-weight="700">config.json</text> <text x="148" y="78" fill="#8b949e">Session cookie, active track &amp; theme</text>
+      <text x="16" y="98" fill="#6e7681">├──</text> <text x="44" y="98" fill="#fbbf24" font-weight="700">notes.json</text> <text x="148" y="98" fill="#8b949e">Per-question lab notes &amp; memos</text>
+      <text x="16" y="118" fill="#6e7681">└──</text> <text x="44" y="118" fill="#82b8f0">session.lock</text> <text x="148" y="118" fill="#8b949e">Local lockfile for config updates</text>
+      <text x="16" y="142" fill="#f0f6fc" font-weight="700">~/.cache/cyberium/ (Downloaded Course Files)</text>
+      <text x="16" y="162" fill="#6e7681">└──</text> <text x="44" y="162" fill="#a855f7" font-weight="700">books/</text> <text x="148" y="162" fill="#8b949e">Saved course PDFs for offline reading</text>
       <line x1="16" y1="180" x2="472" y2="180" stroke="#1b2330" />
-      <text x="16" y="202" fill="#79c0ff" font-weight="700">Atomic Write Guarantees (tempfile.NamedTemporaryFile)</text>
-      <text x="16" y="222" fill="#8b949e">• Serializes to temporary file before os.replace()</text>
-      <text x="16" y="242" fill="#8b949e">• Completely immune to SIGINT / terminal close</text>
-      <text x="16" y="262" fill="#7ee787">• Strict POSIX permissions (0700 dir / 0600 file)</text>
+      <text x="16" y="202" fill="#79c0ff" font-weight="700">Local File Permissions</text>
+      <text x="16" y="222" fill="#8b949e">• Stores session tokens locally in user home folder</text>
+      <text x="16" y="242" fill="#8b949e">• Keeps lab notes separate per track and question</text>
+      <text x="16" y="262" fill="#7ee787">• Restricts config directory permissions to current user</text>
     </g>
   </g>
 
@@ -30,21 +30,20 @@
     <rect x="1" y="1" width="486" height="34" rx="6" fill="#121824" />
     <line x1="0" y1="35" x2="488" y2="35" stroke="#222c3c" stroke-width="1" />
     <line x1="0" y1="8" x2="0" y2="28" stroke="#38bdf8" stroke-width="3.5" />
-    <text x="16" y="23" font-family="Georgia, 'Times New Roman', serif" font-size="12.5" font-weight="700" fill="#79c0ff" letter-spacing="1.1">STDLIB TEST HARNESS &amp; VERIFICATION</text>
-    <text x="472" y="23" text-anchor="end" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#79c0ff">[unittest · 37/37]</text>
+    <text x="16" y="23" font-family="Georgia, 'Times New Roman', serif" font-size="12.5" font-weight="700" fill="#79c0ff" letter-spacing="1.1">REPOSITORY STRUCTURE &amp; MODULES</text>
+    <text x="472" y="23" text-anchor="end" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#79c0ff">[cyberium-cli/]</text>
 
     <g font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.5" fill="#c9d1d9">
-      <text x="16" y="58" fill="#f0f6fc" font-weight="700">Automated Coverage Matrix (tests/test_cyberium.py)</text>
-      <text x="16" y="78" fill="#7ee787">[✓] TestAuthentication</text> <text x="180" y="78" fill="#8b949e">│ SQLite cookies &amp; JWT sync</text>
-      <text x="16" y="98" fill="#7ee787">[✓] TestAPIClient</text> <text x="180" y="98" fill="#8b949e">│ REST headers &amp; token refresh</text>
-      <text x="16" y="118" fill="#7ee787">[✓] TestTextbookStream</text> <text x="180" y="118" fill="#8b949e">│ Presigned R2 stream buffer</text>
-      <text x="16" y="138" fill="#7ee787">[✓] TestNotesEngine</text> <text x="180" y="138" fill="#8b949e">│ Atomic JSON tempfile swap</text>
-      <text x="16" y="158" fill="#7ee787">[✓] TestTUIRenderer</text> <text x="180" y="158" fill="#8b949e">│ Dual-pane curses &amp; bounds</text>
-      <text x="16" y="178" fill="#7ee787">[✓] TestFuzzProtection</text> <text x="180" y="178" fill="#8b949e">│ 10,000 malformed inputs safe</text>
-      <line x1="16" y1="192" x2="472" y2="192" stroke="#1b2330" />
-      <text x="16" y="214" fill="#34d399" font-weight="700">Verification Commands</text>
-      <text x="16" y="234" fill="#82b8f0">python3 -m unittest discover tests</text> <text x="270" y="234" fill="#8b949e">→ Full test execution</text>
-      <text x="16" y="254" fill="#82b8f0">cyberium --test</text> <text x="270" y="254" fill="#8b949e">→ Built-in runtime verify</text>
+      <text x="16" y="58" fill="#f0f6fc" font-weight="700">cyberium/ (CLI &amp; TUI Modules)</text>
+      <text x="16" y="78" fill="#6e7681">├──</text> <text x="44" y="78" fill="#34d399" font-weight="700">cli.py</text> <text x="160" y="78" fill="#8b949e">Command-line argument handler</text>
+      <text x="16" y="98" fill="#6e7681">├──</text> <text x="44" y="98" fill="#38bdf8" font-weight="700">tui.py</text> <text x="160" y="98" fill="#8b949e">Full-screen curses track &amp; question menu</text>
+      <text x="16" y="118" fill="#6e7681">├──</text> <text x="44" y="118" fill="#f59e0b" font-weight="700">api.py</text> <text x="160" y="118" fill="#8b949e">HTTPS client for questions, PDFs &amp; flags</text>
+      <text x="16" y="138" fill="#6e7681">├──</text> <text x="44" y="138" fill="#a855f7" font-weight="700">config.py</text> <text x="160" y="138" fill="#8b949e">Browser SQLite cookie reader &amp; notes storage</text>
+      <text x="16" y="158" fill="#6e7681">└──</text> <text x="44" y="158" fill="#fb7185" font-weight="700">themes.py</text> <text x="160" y="158" fill="#8b949e">Terminal color palettes</text>
+      <line x1="16" y1="180" x2="472" y2="180" stroke="#1b2330" />
+      <text x="16" y="202" fill="#34d399" font-weight="700">docs/ &amp; install.sh</text>
+      <text x="16" y="222" fill="#82b8f0">• Cyberium_CLI_POC_Denis_Albin.pdf</text> <text x="275" y="222" fill="#8b949e">8-Page Walkthrough PDF</text>
+      <text x="16" y="242" fill="#82b8f0">• ./install.sh</text> <text x="275" y="242" fill="#8b949e">Links ~/.local/bin/cyberium</text>
     </g>
   </g>
 </svg>

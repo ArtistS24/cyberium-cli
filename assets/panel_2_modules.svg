@@ -21,9 +21,9 @@
   <g transform="translate(20, 110)">
     <rect x="0" y="0" width="1010" height="36" rx="5" fill="#06080d" />
     <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#56d364">cyberium submit &lt;flag&gt;</text>
-    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Flag Evaluator</text>
-    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">REST API POST · &lt;50ms</text>
-    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Instant verification, auto-advances to next</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Flag Submit</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">HTTPS API POST</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Submits answer flag and moves to next question</text>
   </g>
 
   <g transform="translate(20, 152)">
@@ -62,8 +62,8 @@
     <rect x="0" y="0" width="1010" height="36" rx="5" fill="#080b11" />
     <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#fbbf24">cyberium notes [idx] [txt]</text>
     <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Student Scratchpad</text>
-    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">atomic JSON write · notes</text>
-    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Persists challenge notes and exploit payloads</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">local JSON notes file</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Saves per-question lab notes and findings</text>
   </g>
 
   <g transform="translate(20, 362)">
@@ -93,8 +93,8 @@
   <g transform="translate(20, 488)">
     <rect x="0" y="0" width="1010" height="36" rx="5" fill="#080b11" />
     <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#7ee787">cyberium --test</text>
-    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Stdlib Test Runner</text>
-    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">unittest.defaultTestLoader</text>
-    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Executes 37 standard library automated tests</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Self-Check</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">python3 unittest</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Runs basic CLI self-check tests</text>
   </g>
 </svg>

@@ -37,13 +37,10 @@
 git clone https://github.com/ArtistS24/cyberium-cli.git
 cd cyberium-cli
 
-# Run zero-dependency automated installer (links binary to ~/.local/bin/cyberium)
+# Link cli helper to ~/.local/bin/cyberium
 ./install.sh
 
-# Verify comprehensive standard-library test suite (37 automated unit tests)
-python3 -m unittest discover tests
-
-# Launch full-screen interactive curses TUI dashboard
+# Launch interactive curses TUI dashboard
 cyberium tui
 ```
 
