@@ -61,7 +61,7 @@ target  = "cyberium submit -i 14 'FLAG{auditd_rule_triggered}'"
 ```
 
 <p align="center">
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Runtime-Python_3.8%2B_Stdlib-0d131c?style=flat-square&amp;logo=python&amp;logoColor=38bdf8&amp;labelColor=06090e" alt="Python" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Runtime-Python_3.10%2B_Stdlib-0d131c?style=flat-square&amp;logo=python&amp;logoColor=38bdf8&amp;labelColor=06090e" alt="Python" /></a>
   <a href="https://docs.python.org/3/library/curses.html"><img src="https://img.shields.io/badge/Interface-POSIX_Curses-0d131c?style=flat-square&amp;logo=gnubash&amp;logoColor=10b981&amp;labelColor=06090e" alt="Curses" /></a>
   <a href="https://sqlite.org/"><img src="https://img.shields.io/badge/Session_Sync-SQLite3-0d131c?style=flat-square&amp;logo=sqlite&amp;logoColor=d4a359&amp;labelColor=06090e" alt="SQLite" /></a>
   <a href="https://www.cloudflare.com/"><img src="https://img.shields.io/badge/Delivery-Cloudflare_R2-0d131c?style=flat-square&amp;logo=cloudflare&amp;logoColor=f59e0b&amp;labelColor=06090e" alt="Cloudflare" /></a>
@@ -70,11 +70,11 @@ target  = "cyberium submit -i 14 'FLAG{auditd_rule_triggered}'"
 
 ```toml
 [academic_attribution]
-engineer    = "Denis Albin"
+author      = "Denis Albin"
 handle      = "@ArtistS24"
-role        = "Security Researcher & Tooling Engineer"
+role        = "Cybersecurity Practitioner & Lab Tooling Builder"
 institution = "John Bryce Academy // Division RTX2026"
-status      = "Officially Submitted Capstone Research Project"
+status      = "Student Lab Portfolio & Proof-of-Concept Project"
 dossier     = "docs/Cyberium_CLI_POC_Denis_Albin.pdf (8 Pages, 2.8 MB)"
 
 [disclaimer]
