@@ -856,8 +856,8 @@ def _run_cli():
   cyberium --test               # Run stdlib unit tests
 """
     )
-    parser.add_argument("--test", action="store_true", help="Run comprehensive standard library test suite (37 unit tests)")
-    parser.add_argument("-v", "--version", action="version", version="cyberium-cli v1.0.0 (Python stdlib · zero pip)")
+    parser.add_argument("--test", action="store_true", help="Run built-in CLI self-check tests")
+    parser.add_argument("-v", "--version", action="version", version="cyberium-cli v1.0.0")
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -866,7 +866,7 @@ def _run_cli():
 
     list_parser = subparsers.add_parser("list", aliases=["ls", "all", "questions"], help="List all questions in current module")
     list_parser.add_argument("track", nargs="?", default=None, help="Optional program/track ID or code to switch before listing")
-    subparsers.add_parser("test", help="Run standard library test harness (37 unit tests)")
+    subparsers.add_parser("test", help="Run built-in CLI self-check tests")
     
     # Modules
     subparsers.add_parser("modules", help="List all modules in current program")

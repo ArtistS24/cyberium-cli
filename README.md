@@ -50,11 +50,11 @@ cyberium tui
 
 ```toml
 [instant_lab_submission]
-# Submit active lab objective flag directly from CLI without launching TUI
-command = "cyberium submit 'FLAG{memory_carved_vad_svchost}'"
+# Submit active lab answer directly from CLI (e.g. 30 open TCP ports on Metasploitable 2)
+command = "cyberium submit 30"
 
-# Submit specific question index across any enrolled track
-target  = "cyberium submit -i 14 'FLAG{auditd_rule_triggered}'"
+# Submit answer to a specific question index (e.g. Nmap --reason state on port 445)
+target  = "cyberium submit -i 1 syn-ack"
 ```
 
 <p align="center">

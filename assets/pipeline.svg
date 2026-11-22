@@ -24,7 +24,7 @@
     <text x="14" y="114" class="mono sub">• 16 ANSI color themes</text>
 
     <rect x="14" y="134" width="196" height="24" rx="4" fill="#0369a1" fill-opacity="0.2" stroke="#0284c7" stroke-width="0.8" />
-    <text x="112" y="150" fill="#38bdf8" class="mono badge" text-anchor="middle">PURE PYTHON STDLIB</text>
+    <text x="112" y="150" fill="#38bdf8" class="mono badge" text-anchor="middle">PYTHON 3 CLI &amp; TUI</text>
   </g>
 
   <path d="M250 108 L272 108" stroke="#38bdf8" stroke-width="1.8" stroke-dasharray="3,3" />

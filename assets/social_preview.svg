@@ -59,7 +59,7 @@
   <g transform="translate(55, 410)">
     <rect x="0" y="0" width="860" height="125" rx="8" fill="#090d16" stroke="#1e293b" stroke-width="1" />
     <text x="20" y="35" font-family="monospace" font-size="14" fill="#38bdf8">$ git clone https://github.com/ArtistS24/cyberium-cli.git</text>
-    <text x="20" y="65" font-family="monospace" font-size="14" fill="#94a3b8">[✓] Verified Capstone Architecture · Complete Photographic Evidence Dossier</text>
+    <text x="20" y="65" font-family="monospace" font-size="14" fill="#94a3b8">[+] Pure Python Stdlib CLI &amp; Curses TUI · 37 Automated Unit Tests</text>
     <text x="20" y="95" font-family="monospace" font-size="14" fill="#38bdf8">[*] Official PDF Research Dossier &amp; Whitepaper Included in docs/</text>
   </g>
 
@@ -76,5 +76,5 @@
   </g>
 
   
-  <text x="55" y="575" font-family="monospace" font-size="14" font-weight="600" fill="#64748b">DENIS ALBIN · GITHUB: @ArtistS24 · CITY &amp; GUILDS ACCREDITED</text>
+  <text x="55" y="575" font-family="monospace" font-size="14" font-weight="600" fill="#64748b">DENIS ALBIN · GITHUB: @ArtistS24 · PURE PYTHON 3 STDLIB</text>
 </svg>
