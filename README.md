@@ -25,8 +25,8 @@
 
 <p align="center">
   <img src="assets/sec_3_walkthrough.svg" width="100%" alt="III · Capstone Evidence &amp; POC Gallery" />
-  <a href="docs/Cyberium_CLI_POC_Denis_Albin.pdf" title="Open Cyberium CLI Official Capstone Dossier (8-Page PDF)"><img src="assets/evidence/poc_plate_1_auth_and_tui.png" width="100%" alt="Cyberium CLI Execution Evidence Plate I — Browser Session Harvest, Full-Screen Curses TUI Navigator &amp; Sub-Second Flag Solve (Cyberium_CLI_POC_Denis_Albin.pdf Figures 1, 5, 6)" /></a>
-  <a href="docs/Cyberium_CLI_POC_Denis_Albin.pdf" title="Open Cyberium CLI Official Capstone Dossier (8-Page PDF)"><img src="assets/evidence/poc_plate_2_cli_streaming_and_notes.png" width="100%" alt="Cyberium CLI Execution Evidence Plate II — POSIX Command Tree, Cloudflare R2 Textbook Streaming, Live Metasploitable 2 Recon &amp; Scratchpad Notes (Cyberium_CLI_POC_Denis_Albin.pdf Figures 2, 3, 4, 7)" /></a>
+  <a href="docs/Cyberium_CLI_POC_Denis_Albin.pdf" title="Open Cyberium CLI Lab PoC (8-Page PDF)"><img src="assets/evidence/poc_plate_1_auth_and_tui.png" width="100%" alt="Cyberium CLI Execution Evidence Plate I — Browser Session Harvest, Full-Screen Curses TUI Navigator &amp; Sub-Second Flag Solve (Cyberium_CLI_POC_Denis_Albin.pdf Figures 1, 5, 6)" /></a>
+  <a href="docs/Cyberium_CLI_POC_Denis_Albin.pdf" title="Open Cyberium CLI Lab PoC (8-Page PDF)"><img src="assets/evidence/poc_plate_2_cli_streaming_and_notes.png" width="100%" alt="Cyberium CLI Execution Evidence Plate II — POSIX Command Tree, Cloudflare R2 Textbook Streaming, Live Metasploitable 2 Recon &amp; Scratchpad Notes (Cyberium_CLI_POC_Denis_Albin.pdf Figures 2, 3, 4, 7)" /></a>
 </p>
 
 <p align="center">
