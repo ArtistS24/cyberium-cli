@@ -6,7 +6,7 @@
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Language-Python_3_Stdlib-38bdf8?style=for-the-badge&amp;logo=python&amp;logoColor=white&amp;labelColor=06090e" alt="Language" /></a>
   <a href="cyberium/tui.py"><img src="https://img.shields.io/badge/Interface-Curses_TUI_%2B_CLI-10b981?style=for-the-badge&amp;logo=gnubash&amp;logoColor=white&amp;labelColor=06090e" alt="Interface" /></a>
   <a href="cyberium/config.py"><img src="https://img.shields.io/badge/Auth_Sync-SQLite_Cookie_Harvest-d4a359?style=for-the-badge&amp;logo=sqlite&amp;logoColor=white&amp;labelColor=06090e" alt="Auth Engine" /></a>
-  <a href="docs/Cyberium_CLI_POC_Denis_Albin.pdf"><img src="https://img.shields.io/badge/Capstone_Dossier-PDF_(8_Pages)-56d364?style=for-the-badge&amp;logo=readthedocs&amp;logoColor=white&amp;labelColor=06090e" alt="Capstone Dossier" /></a>
+  <a href="docs/Cyberium_CLI_POC_Denis_Albin.pdf"><img src="https://img.shields.io/badge/Lab_PoC_Dossier-PDF_(8_Pages)-56d364?style=for-the-badge&amp;logo=readthedocs&amp;logoColor=white&amp;labelColor=06090e" alt="Lab PoC Dossier" /></a>
 </p>
 
 <p align="center">

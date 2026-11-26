@@ -37,7 +37,7 @@ CYBERIUM_LOGO = rf"""{CYAN}{BOLD}
   ██║       ╚██╔╝  ██╔══██╗██╔══╝  ██╔══██╗██║██║   ██║██║╚██╔╝██║
   ╚██████╗   ██║   ██████╔╝███████╗██║  ██║██║╚██████╔╝██║ ╚═╝ ██║
    ╚═════╝   ╚═╝   ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝ ╚═════╝ ╚═╝     ╚═╝{RESET}
-{RED}{BOLD}  [ JOHN BRYCE #1 בטכנולוגיה ]{RESET}  {YELLOW}{BOLD}★ OFFENSIVE WARFARE SUITE v2.0{RESET}
+{RED}{BOLD}  [ JOHN BRYCE #1 בטכנולוגיה ]{RESET}  {YELLOW}{BOLD}★ TERMINAL LAB HELPER{RESET}
 """
 
 ASCII_BANNER = CYBERIUM_LOGO
