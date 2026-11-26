@@ -92,29 +92,31 @@ def find_browser_cyberium_cookies():
     best_cookies = {}
     newest_mtime = 0
 
-    # Scan Gecko / Firefox databases
+    # Scan Gecko / Firefox databases using an isolated 0700 temp directory
     for pattern in gecko_patterns:
         for db_path in glob.glob(pattern):
             if not os.path.exists(db_path):
                 continue
             try:
                 mtime = os.path.getmtime(db_path)
-                tmp_db = tempfile.mktemp(suffix=".sqlite")
-                shutil.copy2(db_path, tmp_db)
-                wal_path = db_path + "-wal"
-                if os.path.exists(wal_path):
-                    shutil.copy2(wal_path, tmp_db + "-wal")
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    tmp_db = os.path.join(tmp_dir, "cookies.sqlite")
+                    shutil.copy2(db_path, tmp_db)
+                    wal_path = db_path + "-wal"
+                    if os.path.exists(wal_path):
+                        shutil.copy2(wal_path, tmp_db + "-wal")
 
-                con = sqlite3.connect(tmp_db)
-                cur = con.cursor()
-                cur.execute("SELECT name, value FROM moz_cookies WHERE host LIKE '%cyberium.academy%'")
-                rows = cur.fetchall()
-                con.close()
-
-                if os.path.exists(tmp_db):
-                    os.remove(tmp_db)
-                if os.path.exists(tmp_db + "-wal"):
-                    os.remove(tmp_db + "-wal")
+                    con = sqlite3.connect(tmp_db)
+                    try:
+                        cur = con.cursor()
+                        # Match only exact domain or valid subdomains
+                        cur.execute(
+                            "SELECT name, value FROM moz_cookies "
+                            "WHERE host = 'cyberium.academy' OR host LIKE '%.cyberium.academy'"
+                        )
+                        rows = cur.fetchall()
+                    finally:
+                        con.close()
 
                 if rows:
                     cdict = {r[0]: r[1] for r in rows if r[1]}
@@ -125,7 +127,7 @@ def find_browser_cyberium_cookies():
             except Exception:
                 pass
 
-    # Scan Chromium databases
+    # Scan Chromium databases (works when unencrypted plaintext cookies exist)
     for pattern in chromium_patterns:
         for db_path in glob.glob(pattern):
             if not os.path.exists(db_path):
@@ -134,22 +136,23 @@ def find_browser_cyberium_cookies():
                 mtime = os.path.getmtime(db_path)
                 if mtime < newest_mtime and best_cookies:
                     continue
-                tmp_db = tempfile.mktemp(suffix=".sqlite")
-                shutil.copy2(db_path, tmp_db)
-                wal_path = db_path + "-wal"
-                if os.path.exists(wal_path):
-                    shutil.copy2(wal_path, tmp_db + "-wal")
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    tmp_db = os.path.join(tmp_dir, "cookies.sqlite")
+                    shutil.copy2(db_path, tmp_db)
+                    wal_path = db_path + "-wal"
+                    if os.path.exists(wal_path):
+                        shutil.copy2(wal_path, tmp_db + "-wal")
 
-                con = sqlite3.connect(tmp_db)
-                cur = con.cursor()
-                cur.execute("SELECT name, value FROM cookies WHERE host_key LIKE '%cyberium.academy%'")
-                rows = cur.fetchall()
-                con.close()
-
-                if os.path.exists(tmp_db):
-                    os.remove(tmp_db)
-                if os.path.exists(tmp_db + "-wal"):
-                    os.remove(tmp_db + "-wal")
+                    con = sqlite3.connect(tmp_db)
+                    try:
+                        cur = con.cursor()
+                        cur.execute(
+                            "SELECT name, value FROM cookies "
+                            "WHERE host_key = 'cyberium.academy' OR host_key LIKE '%.cyberium.academy'"
+                        )
+                        rows = cur.fetchall()
+                    finally:
+                        con.close()
 
                 if rows:
                     cdict = {r[0]: r[1] for r in rows if r[1]}

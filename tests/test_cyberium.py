@@ -31,10 +31,19 @@ class TestConfig(unittest.TestCase):
         config.CONFIG_PATH = os.path.join(self.temp_dir, "config.json")
         config.NOTES_PATH = os.path.join(self.temp_dir, "notes.json")
 
+        # Prevent tests from reading live browser cookies or CWD .env files
+        self.orig_cwd = os.getcwd()
+        os.chdir(self.temp_dir)
+        self.cookie_patcher = patch("cyberium.config.find_firefox_cyberium_cookies", return_value={})
+        self.cookie_patcher.start()
+
     def tearDown(self):
+        self.cookie_patcher.stop()
+        os.chdir(self.orig_cwd)
         config.CONFIG_DIR = self.orig_config_dir
         config.CONFIG_PATH = self.orig_config_path
         config.NOTES_PATH = self.orig_notes_path
+        shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_default_config(self):
         cfg = config.load_config()
@@ -290,7 +299,7 @@ class TestCLI(unittest.TestCase):
                 {"index": 14, "text": "2.2. Exfiltrate passwd", "answered": False}
             ]
         }
-        with patch("builtins.print") as mock_print:
+        with patch("cyberium.cli.get_note", return_value=""), patch("builtins.print") as mock_print:
             cli.cmd_current(self.mock_client, self.cfg)
             self.assertTrue(mock_print.called)
 
@@ -344,6 +353,12 @@ class TestCLI(unittest.TestCase):
                 {"index": 2, "text": "Run cat *", "answered": True}
             ]
         }
+        with patch("builtins.print") as mock_print:
+            cli.cmd_search(self.mock_client, self.cfg, "[0-9]+")
+            printed = " ".join(str(c.args[0]) for c in mock_print.call_args_list if c.args)
+            self.assertIn("grep -E", printed)
+            self.assertNotIn("Run cat *", printed)
+
     def test_resolve_question_target(self):
         self.mock_client.get_questions.return_value = {
             "module_name": "Post (Linux)",

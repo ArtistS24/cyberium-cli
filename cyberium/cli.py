@@ -817,7 +817,7 @@ def _run_tests():
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
     if result.wasSuccessful():
-        print(f"\n{GREEN}[{ICON_CHECK}] All {result.testsRun} automated unit tests PASSED (100% test coverage).{RESET}\n")
+        print(f"\n{GREEN}[{ICON_CHECK}] All {result.testsRun} automated unit tests PASSED.{RESET}\n")
         sys.exit(0)
     else:
         print(f"\n{RED}[{ICON_CROSS}] Test failures encountered: {len(result.failures)} failures, {len(result.errors)} errors.{RESET}\n")
@@ -840,7 +840,7 @@ def _run_cli():
   cyberium modules              # List modules in active program
   cyberium programs             # List all 14 enrolled programs
   cyberium extra                # View bonus / extra challenges
-  cyberium themes               # List 16 color palettes
+  cyberium themes               # List 17 color palettes
   cyberium set-theme matrix     # Switch to matrix / classic theme
   cyberium stats                # Full operator rank, progress & stats
   cyberium note "memo"          # Save note to current active question

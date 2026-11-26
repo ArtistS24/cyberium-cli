@@ -38,8 +38,8 @@
     <rect x="0" y="0" width="1010" height="36" rx="5" fill="#06080d" />
     <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#82b8f0">cyberium q [index]</text>
     <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Question Reader</text>
-    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">urllib.request · hint ladder</text>
-    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Renders question text, choices, and hints</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">urllib.request · JSON API</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Renders prompt text, links, and solve status</text>
   </g>
 
   <g transform="translate(20, 236)">
@@ -47,7 +47,7 @@
     <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#a855f7">cyberium book [-o|-d|-c]</text>
     <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Cloud Textbook Stream</text>
     <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">Cloudflare R2 presigned CDN</text>
-    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Streams PDF pager (-o), caches (-d), copies URL (-c)</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Opens PDF booklet (-o), saves (-d), copies URL (-c)</text>
   </g>
 
   <g transform="translate(20, 278)">
@@ -55,7 +55,7 @@
     <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#f59e0b">cyberium auth [--manual]</text>
     <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Session Harvest</text>
     <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">sqlite3 moz_cookies query</text>
-    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Auto-discovers live browser session from SQLite</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Auto-discovers live Firefox session from SQLite</text>
   </g>
 
   <g transform="translate(20, 320)">
@@ -68,26 +68,26 @@
 
   <g transform="translate(20, 362)">
     <rect x="0" y="0" width="1010" height="36" rx="5" fill="#06080d" />
-    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#79c0ff">cyberium ls [track]</text>
-    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Syllabus Inspector</text>
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#79c0ff">cyberium ls</text>
+    <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Question List</text>
     <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">REST GET · JSON parser</text>
-    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Displays module catalog and progress totals</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Lists active module questions and solve status</text>
   </g>
 
   <g transform="translate(20, 404)">
     <rect x="0" y="0" width="1010" height="36" rx="5" fill="#080b11" />
     <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#d4a359">cyberium status</text>
     <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Operator Summary</text>
-    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">Cached state &amp; JWT check</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">HTTPS GET · session check</text>
     <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">Prints active session, track, and solved flag count</text>
   </g>
 
   <g transform="translate(20, 446)">
     <rect x="0" y="0" width="1010" height="36" rx="5" fill="#06080d" />
-    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#c9654b">cyberium theme [palette]</text>
+    <text x="16" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="11.0" font-weight="700" fill="#c9654b">cyberium set-theme &lt;name&gt;</text>
     <text x="246" y="23" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="12.0" font-weight="600" fill="#f0f4f8">Colorway Customizer</text>
-    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">ANSI 256 / SGR palettes</text>
-    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">16 color themes: Tokyo Night, Nord, Dracula, Matrix</text>
+    <text x="446" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="10.2" fill="#82b8f0">curses color palettes</text>
+    <text x="700" y="23" font-family="ui-monospace, 'JetBrains Mono', monospace" font-size="9.8" fill="#9da9bb">17 TUI color themes: Tokyo Night, Nord, Dracula, Matrix</text>
   </g>
 
   <g transform="translate(20, 488)">
